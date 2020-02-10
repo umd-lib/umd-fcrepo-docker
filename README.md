@@ -2,6 +2,13 @@
 
 Docker images for the Fedora (fcrepo) applications.
 
+## Quick Start
+
+```
+git clone git@github.com:umd-lib/umd-fcrepo-docker.git
+cd umd-fcrepo-docker
+```
+
 ## PostgreSQL
 
 Uses the [PostgreSQL Docker base image](https://hub.docker.com/_/postgres/).
