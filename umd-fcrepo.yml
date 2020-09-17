@@ -1,0 +1,26 @@
+version: "3.7"
+services:
+  postgres:
+    image: docker.lib.umd.edu/fcrepo-postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+  activemq:
+    image: docker.lib.umd.edu/fcrepo-activemq
+    volumes:
+      - activemq-data:/var/opt/activemq
+    ports:
+      - 61616:61616
+      - 61613:61613
+      - 8161:8161
+  solr-fedora4:
+    image: docker.lib.umd.edu/fcrepo-solr-fedora4
+    volumes:
+      - solr-fedora4-data:/var/opt/solr
+    ports:
+      - 8983:8983
+volumes:
+  postgres-data:
+  activemq-data:
+  solr-fedora4-data:
