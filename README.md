@@ -15,6 +15,7 @@ Build images:
 docker build -t docker.lib.umd.edu/fcrepo-postgres postgres
 docker build -t docker.lib.umd.edu/fcrepo-activemq activemq
 docker build -t docker.lib.umd.edu/fcrepo-solr-fedora4 solr-fedora4
+docker build -t docker.lib.umd.edu/fcrepo-fuseki fuseki
 ```
 
 Deploy the stack:
@@ -27,6 +28,7 @@ docker stack deploy --with-registry-auth -c umd-fcrepo.yml umd-fcrepo
 
 * ActiveMQ admin console: <http://localhost:8161/admin>
 * Solr admin console: <http://localhost:8983/solr/#/>
+* Fuseki admin console: <http://localhost:3030/>
 
 ## Individual Images
 
@@ -36,3 +38,4 @@ files for each image for more information:
 * [PostgreSQL](postgres/README.md)
 * [ActiveMQ](activemq/README.md)
 * [Solr (fedora4 Core)](solr-fedora4/README.md)
+* [Fuseki](fuseki/README.md)
