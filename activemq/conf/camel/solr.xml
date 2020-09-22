@@ -1,0 +1,91 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+  http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+  <bean id="deadLetterProcessor" class="edu.umd.lib.camel.processors.DeadLetterProcessor"/>
+
+  <bean id="deadLetterErrorHandler" class="org.apache.camel.builder.DeadLetterChannelBuilder">
+    <property name="deadLetterUri" value="activemq:queue:dead"/>
+    <property name="redeliveryPolicy" ref="redeliveryPolicyConfig"/>
+    <property name="onPrepareFailure" ref="deadLetterProcessor"/>
+  </bean>
+
+  <bean id="redeliveryPolicyConfig" class="org.apache.camel.processor.RedeliveryPolicy">
+    <property name="maximumRedeliveries" value="3"/>
+    <property name="redeliveryDelay" value="5000"/>
+  </bean>
+
+  <camelContext xmlns="http://camel.apache.org/schema/spring" id="SolrIndex" errorHandlerRef="deadLetterErrorHandler">
+    <route id="solrIndexing">
+      <from uri="activemq:queue:fedorasolr"/>
+      <choice>
+	<when>
+          <simple>
+            ${header.CamelFcrepoEventType} contains "http://fedora.info/definitions/v4/event#ResourceDeletion"
+            || ${header.CamelFcrepoEventType} contains "https://www.w3.org/ns/activitystreams#Delete"
+          </simple>
+          <to uri="direct:solr.delete"/>
+        </when>
+        <otherwise>
+          <to uri="direct:solr.index"/>
+        </otherwise>
+      </choice>
+    </route>
+
+    <route id="solrReindexing">
+      <from uri="activemq:queue:solr.reindex"/>
+      <to uri="direct:solr.index"/>
+    </route>
+
+    <route id="insertIntoSolr">
+      <from uri="direct:solr.index"/>
+      <!-- do the LDPath transformation over HTTP -->
+      <setHeader headerName="CamelHttpUri">
+        <constant>http://localhost:9086/ldpath</constant>
+      </setHeader>
+      <setHeader headerName="CamelHttpMethod">
+        <constant>GET</constant>
+      </setHeader>
+      <setHeader headerName="CamelHttpQuery">
+        <simple>context=${headers.CamelFcrepoUri}&amp;ldpath=https://fcrepolocal/ldpath/index-transformation.ldpath</simple>
+      </setHeader>
+      <removeHeaders pattern="CamelFcrepo*"/>
+      <to uri="http4:ldpath"/>
+
+      <!-- update Solr index using the result of the LDPath transformation -->
+      <removeHeaders pattern="CamelHttp*"/>
+      <setHeader headerName="CamelHttpUri">
+        <simple>http://${properties:solr.server}/solr/${properties:solr.core}/update</simple>
+      </setHeader>
+      <setHeader headerName="CamelHttpMethod">
+        <constant>POST</constant>
+      </setHeader>
+      <to uri="http4:solr"/>
+      <to uri="direct:solr.commit"/>
+    </route>
+
+    <route id="deleteFromSolr">
+      <from uri="direct:solr.delete"/>
+      <setHeader headerName="SolrOperation">
+        <constant>DELETE_BY_ID</constant>
+      </setHeader>
+      <setBody>
+        <simple>${header.CamelFcrepoUri}</simple>
+      </setBody>
+      <removeHeaders pattern="CamelFcrepo*"/>
+      <to uri="solr:{{solr.server}}/solr/{{solr.core}}"/>
+      <to uri="direct:solr.commit"/>
+    </route>
+    
+    <route id="commitSolrChanges">
+      <from uri="direct:solr.commit"/>
+      <setHeader headerName="SolrOperation">
+        <constant>COMMIT</constant>
+      </setHeader>
+      <to uri="solr:{{solr.server}}/solr/{{solr.core}}"/>
+    </route>
+
+  </camelContext>
+
+</beans>

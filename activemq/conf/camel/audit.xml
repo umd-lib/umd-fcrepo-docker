@@ -1,0 +1,69 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+  http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+  
+  <bean id="auditDatabase" class="org.postgresql.ds.PGSimpleDataSource">
+    <property name="serverName" value="${env:PG_HOSTNAME}"/>
+    <property name="portNumber" value="5432"/>
+    <property name="databaseName" value="${env:PG_AUDIT_DATABASE}"/>
+    <property name="user" value="${env:PG_CAMEL_USERNAME}"/>
+    <property name="password" value="${env:PG_CAMEL_PASSWORD}"/>
+  </bean>
+
+  <bean id="auditPremisProcessor" class="edu.umd.lib.camel.processors.AuditPremisProcessor"/>
+
+  <camelContext xmlns="http://camel.apache.org/schema/spring" id="Auditing">
+
+    <route id="audit">
+      <from uri="activemq:queue:fedoraaudit"/>
+      <setHeader headerName="CamelAuditEventBaseUri">
+        <constant>https://fcrepolocal/audit</constant>
+      </setHeader>
+      <setHeader headerName="CamelAuditEventUri">
+        <simple>${header.CamelAuditEventBaseUri}/${header.CamelFcrepoEventId}</simple>
+      </setHeader>
+      <process ref="auditPremisProcessor"/>
+      <to uri="activemq:queue:fedorapremis"/>
+    </route>
+
+    <route id="premisDistribution">
+      <from uri="activemq:queue:fedorapremis"/>
+      <multicast parallelProcessing="true">
+        <to uri="activemq:queue:triplestore.audit.data"/>
+        <to uri="activemq:queue:audit.data"/>
+      </multicast>
+    </route>
+
+    <route id="auditDatabase">
+      <from uri="activemq:queue:audit.data"/>
+      <setBody>
+        <constant><![CDATA[
+          INSERT INTO history (event_uri, event_type, username, resource_uri, timestamp)
+          VALUES (:?CamelAuditEventUri, :?CamelAuditEventType, :?CamelFcrepoUser, :?CamelFcrepoUri, (:?CamelFcrepoDateTime)::timestamp with time zone)
+          ]]></constant>
+      </setBody>
+      <to uri="jdbc:auditDatabase?useHeadersAsParameters=true"/>
+    </route>
+
+    <route id="auditTriplestore">
+      <from uri="activemq:queue:triplestore.audit.data"/>
+      <removeHeaders pattern="*"/>
+      <setHeader headerName="Content-Type">
+        <constant>application/sparql-update</constant>
+      </setHeader>
+      <setHeader headerName="CamelHttpMethod">
+        <constant>POST</constant>
+      </setHeader>
+      <setHeader headerName="CamelHttpUri">
+        <constant>https://fcrepolocal/fuseki/fcrepo-audit/update</constant>
+      </setHeader>
+      <setBody>
+        <simple>INSERT DATA { ${body} }</simple>
+      </setBody>
+      <to uri="http4:triplestore"/>
+    </route>
+
+  </camelContext>
+
+</beans>

@@ -15,8 +15,10 @@ ENV ACTIVEMQ_HOME /opt/apache-activemq-${ACTIVEMQ_VERSION}
 ENV ACTIVEMQ_DATA /var/opt/activemq
 ENV ACTIVEMQ_MAX_DISK 16G
 
-COPY conf/* $ACTIVEMQ_HOME/conf/
+COPY conf/ $ACTIVEMQ_HOME/conf/
 COPY env $ACTIVEMQ_HOME/bin/env
+
+COPY *.jar $ACTIVEMQ_HOME/lib/optional/
 
 VOLUME /var/opt/activemq
 EXPOSE 61613

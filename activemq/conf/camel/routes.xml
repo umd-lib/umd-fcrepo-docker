@@ -1,0 +1,96 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+  http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+  <bean id="eventProcessor" class="org.fcrepo.camel.processor.EventProcessor"/>
+
+  <camelContext xmlns="http://camel.apache.org/schema/spring" id="UmdFcrepoEventRouter">
+
+    <route id="fedoraEvents">
+      <from uri="activemq:queue:fedora"/>
+      <process ref="eventProcessor"/>
+      <setHeader headerName="CamelFcrepoUser">
+        <simple>${header.org.fcrepo.jms.user}</simple>
+      </setHeader>
+      <setHeader headerName="CamelFcrepoUserAgent">
+        <simple>${header.org.fcrepo.jms.userAgent}</simple>
+      </setHeader>
+      <setHeader headerName="CamelFcrepoEventType">
+        <simple>${header.org.fcrepo.jms.eventType}</simple>
+      </setHeader>
+      <setHeader headerName="CamelFcrepoResourceType">
+        <simple>${header.org.fcrepo.jms.resourceType}</simple>
+      </setHeader>
+      <setHeader headerName="CamelFcrepoPath">
+        <simple>${header.org.fcrepo.jms.identifier}</simple>
+      </setHeader>
+      <log loggingLevel="DEBUG" message="Event user: ${header.CamelFcrepoUser}"/>
+      <log loggingLevel="DEBUG" message="Event user agent: ${header.CamelFcrepoUserAgent}"/>
+      <log loggingLevel="INFO" message="Routing event for resource with URI: ${header.CamelFcrepoUri}"/>
+      <removeHeaders pattern="org.fcrepo.*"/>
+      <filter>
+        <simple>${header.CamelFcrepoPath} in "/pcdm,/annotations"</simple>
+        <log loggingLevel="DEBUG" message="Skip path detected. Suppressing ${header.CamelFcrepoEventType} for '${header.CamelFcrepoPath}'."/>
+        <stop/>
+      </filter>
+      <filter>
+        <simple>${header.CamelFcrepoUser} == ${env:BATCH_USER}</simple>
+        <to uri="direct:batch"/>
+        <stop/>
+      </filter>
+      <to uri="direct:distribution"/>
+    </route>
+
+    <route id="batchEvents">
+      <from uri="direct:batch"/>
+      <log loggingLevel="DEBUG" message="Processing batch event"/>
+      <filter>
+        <simple>${header.CamelFcrepoPath} contains '#'</simple>
+        <log loggingLevel="DEBUG" message="URI with fragment detected. Suppressing '${header.CamelFcrepoPath}' node event for batch user."/>
+        <stop/>
+      </filter>
+      <setHeader headerName="JMSPriority">
+        <constant>3</constant>
+      </setHeader>
+      <setHeader headerName="UMDBatchEvent">
+        <constant>true</constant>
+      </setHeader>
+      <to uri="direct:distribution"/>
+    </route>
+
+    <route id="distribution">
+      <from uri="direct:distribution"/>
+      <multicast parallelProcessing="true">
+        <filter>
+          <simple>${header.CamelFcrepoResourceType} contains "http://fedora.info/definitions/v4/repository#Binary"</simple>
+          <to uri="direct:binary"/>
+        </filter>
+        <to uri="activemq:queue:fedorasolr"/>
+        <to uri="activemq:queue:fedoratriplestore"/>
+        <to uri="activemq:queue:fedoraaudit"/>
+      </multicast>
+    </route>
+
+    <route id="binaries">
+      <from uri="direct:binary"/>
+      <filter>
+        <!--
+          if the message is about a new binary, remove all headers except for CamelFcrepoUri,
+          clear the body, and send to the fixity candidates queue
+        -->
+        <simple>${header.CamelFcrepoEventType} contains "http://fedora.info/definitions/v4/event#ResourceCreation"</simple>
+        <log loggingLevel="INFO" message="New binary detected, sending to fixity candidates queue"/>
+          <!-- clean out unnecessary headers (just leave the fcrepo URI), and clear the body -->
+        <removeHeaders pattern="*" excludePattern="CamelFcrepoUri"/>
+        <setBody>
+          <constant></constant>
+        </setBody>
+        <to uri="activemq:queue:fixitycandidates"/>
+      </filter>
+      <!-- send to fixity processing -->
+      <to uri="activemq:queue:fedorafixity"/>
+    </route>
+
+  </camelContext>
+</beans>

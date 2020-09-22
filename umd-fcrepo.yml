@@ -14,6 +14,16 @@ services:
       - 61616:61616
       - 61613:61613
       - 8161:8161
+    environment:
+      - BATCH_USER=CN=batchloader
+      - PG_HOSTNAME=postgres
+      - PG_PORT=5432
+      - PG_USERNAME=fcrepo
+      - PG_PASSWORD=fcrepo
+      - PG_AUDIT_DATABASE=fcrepo_audit
+      - PG_CAMEL_USERNAME=camel
+      - PG_CAMEL_PASSWORD=camel
+
   solr-fedora4:
     image: docker.lib.umd.edu/fcrepo-solr-fedora4
     volumes:
