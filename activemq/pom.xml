@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>edu.umd.lib</groupId>
+  <artifactId>umd-fcrepo_activemq</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <description>
+    This POM file is used to pull in the Java dependencies for the Camel routes
+    defined in the conf/camel/*.xml files.
+  </description>
+
+  <properties>
+    <camel.version>2.25.2</camel.version>
+    <fcrepo-camel.version>4.5.0</fcrepo-camel.version>
+    <postgresql.version>42.2.16</postgresql.version>
+  </properties>
+
+  <dependencies>
+    <!-- PostgreSQL -->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${postgresql.version}</version>
+    </dependency>
+
+    <!-- Apache Camel components -->
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-jms</artifactId>
+      <version>${camel.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-http4</artifactId>
+      <version>${camel.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-groovy</artifactId>
+      <version>${camel.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-jdbc</artifactId>
+      <version>${camel.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-solr</artifactId>
+      <version>${camel.version}</version>
+    </dependency>
+
+    <!-- fcrepo Camel library -->
+    <dependency>
+      <groupId>org.fcrepo.camel</groupId>
+      <artifactId>fcrepo-camel</artifactId>
+      <version>${fcrepo-camel.version}</version>
+    </dependency>
+  </dependencies>
+
+</project>

@@ -5,7 +5,7 @@
 
   <bean id="eventProcessor" class="org.fcrepo.camel.processor.EventProcessor"/>
 
-  <camelContext xmlns="http://camel.apache.org/schema/spring" id="UmdFcrepoEventRouter">
+  <camelContext xmlns="http://camel.apache.org/schema/spring" id="UmdFcrepoEventRouter" streamCache="true">
 
     <route id="fedoraEvents">
       <from uri="activemq:queue:fedora"/>
