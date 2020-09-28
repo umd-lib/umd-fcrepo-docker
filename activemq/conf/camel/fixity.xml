@@ -28,7 +28,7 @@
             SELECT ?s ?p ?o
               (uri(strbefore(str(?s), "#")) AS ?target)
               (now() as ?now)
-              (uri(concat("https://fcrepolocal/audit/", str(?uuid))) as ?audit)
+              (uri(concat("http://localhost:8080/audit/", str(?uuid))) as ?audit)
               (if(?outcome = "SUCCESS", earl:passed, earl:failed) as ?outcome_term)
             WHERE {
               ?s ?p ?o
@@ -64,7 +64,7 @@
   <!-- must enable stream caching since multiple downstream endpoints need to each read the message body in parallel -->
   <camelContext xmlns="http://camel.apache.org/schema/spring" id="FixityChecking" streamCache="true">
 
-    <route id="fixityChecker">
+    <route id="edu.umd.lib.camel.routes.FixityChecker">
       <from uri="activemq:queue:fedorafixity"/>
       <setHeader headerName="CamelHttpUri">
         <simple>${header.CamelFcrepoUri}</simple>
@@ -104,7 +104,7 @@
       </filter>
     </route>
 
-    <route id="fixitySuccessDistribution">
+    <route id="edu.umd.lib.camel.routes.FixitySuccessDistribution">
       <from uri="activemq:queue:fixitysuccess"/>
       <multicast parallelProcessing="true">
         <to uri="direct:fixity.log"/>
@@ -112,7 +112,7 @@
       </multicast>
     </route>
 
-    <route id="fixityFailureDistribution">
+    <route id="edu.umd.lib.camel.routes.FixityFailureDistribution">
       <from uri="activemq:queue:fixityfailure"/>
       <multicast parallelProcessing="true">
         <to uri="direct:fixity.log"/>
@@ -121,7 +121,7 @@
       </multicast>
     </route>
 
-    <route id="fixityAudit">
+    <route id="edu.umd.lib.camel.routes.FixityAudit">
       <from uri="direct:fixity.audit"/>
       <setHeader headerName="CamelAuditEventId">
         <groovy>"urn:uuid:" + UUID.randomUUID().toString()</groovy>
@@ -136,13 +136,13 @@
       <to uri="activemq:queue:fedorapremis"/>
     </route>
 
-    <route id="fixityLog">
+    <route id="edu.umd.lib.camel.routes.FixityLog">
       <from uri="direct:fixity.log"/>
       <process ref="fixityLogSparqlProcessor"/>
       <to uri="file:/apps/fedora/logs/?fileName=fixity.log&amp;fileExist=Append"/>
     </route>
 
-    <route id="fixityNotify">
+    <route id="edu.umd.lib.camel.routes.FixityNotify">
       <from uri="direct:fixity.notify"/>
       <!--
       <to uri="smtp://localhost?To=lib-fcrepo-notify@umd.edu&amp;From=fedora@{{fcrepo.server}}&amp;Subject=Fixity%20Failure"/>

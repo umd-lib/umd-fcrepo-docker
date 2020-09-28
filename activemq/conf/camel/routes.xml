@@ -7,23 +7,24 @@
 
   <camelContext xmlns="http://camel.apache.org/schema/spring" id="UmdFcrepoEventRouter" streamCache="true">
 
-    <route id="fedoraEvents">
+    <route id="edu.umd.lib.camel.routes.FedoraEvents">
       <from uri="activemq:queue:fedora"/>
+      <!-- log loggingLevel="DEBUG" message="batch user: ${BATCH_USER}"/ -->
       <process ref="eventProcessor"/>
       <setHeader headerName="CamelFcrepoUser">
-        <simple>${header.org.fcrepo.jms.user}</simple>
+        <header>org.fcrepo.jms.user</header>
       </setHeader>
       <setHeader headerName="CamelFcrepoUserAgent">
-        <simple>${header.org.fcrepo.jms.userAgent}</simple>
+        <header>org.fcrepo.jms.userAgent</header>
       </setHeader>
       <setHeader headerName="CamelFcrepoEventType">
-        <simple>${header.org.fcrepo.jms.eventType}</simple>
+        <header>org.fcrepo.jms.eventType</header>
       </setHeader>
       <setHeader headerName="CamelFcrepoResourceType">
-        <simple>${header.org.fcrepo.jms.resourceType}</simple>
+        <header>org.fcrepo.jms.resourceType</header>
       </setHeader>
       <setHeader headerName="CamelFcrepoPath">
-        <simple>${header.org.fcrepo.jms.identifier}</simple>
+        <header>org.fcrepo.jms.identifier</header>
       </setHeader>
       <log loggingLevel="DEBUG" message="Event user: ${header.CamelFcrepoUser}"/>
       <log loggingLevel="DEBUG" message="Event user agent: ${header.CamelFcrepoUserAgent}"/>
@@ -35,19 +36,19 @@
         <stop/>
       </filter>
       <filter>
-        <simple>${header.CamelFcrepoUser} == ${env:BATCH_USER}</simple>
+        <simple>${header.CamelFcrepoUser} == "CN=batchloader"</simple>
         <to uri="direct:batch"/>
         <stop/>
       </filter>
       <to uri="direct:distribution"/>
     </route>
 
-    <route id="batchEvents">
+    <route id="edu.umd.lib.camel.routes.BatchEvents">
       <from uri="direct:batch"/>
       <log loggingLevel="DEBUG" message="Processing batch event"/>
       <filter>
         <simple>${header.CamelFcrepoPath} contains '#'</simple>
-        <log loggingLevel="DEBUG" message="URI with fragment detected. Suppressing '${header.CamelFcrepoPath}' node event for batch user."/>
+        <log loggingLevel="DEBUG" message="URI with fragment detected. Suppressing '${header.CamelFcrepoUri}' node event for batch user."/>
         <stop/>
       </filter>
       <setHeader headerName="JMSPriority">
@@ -59,8 +60,9 @@
       <to uri="direct:distribution"/>
     </route>
 
-    <route id="distribution">
+    <route id="edu.umd.lib.camel.routes.Distribution">
       <from uri="direct:distribution"/>
+      <log loggingLevel="DEBUG" message="Distributing event for ${header.CamelFcrepoUri}"/>
       <multicast parallelProcessing="true">
         <filter>
           <simple>${header.CamelFcrepoResourceType} contains "http://fedora.info/definitions/v4/repository#Binary"</simple>
@@ -72,7 +74,7 @@
       </multicast>
     </route>
 
-    <route id="binaries">
+    <route id="edu.umd.lib.camel.routes.Binaries">
       <from uri="direct:binary"/>
       <filter>
         <!--

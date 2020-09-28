@@ -13,10 +13,11 @@
 
   <bean id="auditPremisProcessor" class="edu.umd.lib.camel.processors.AuditPremisProcessor"/>
 
-  <camelContext xmlns="http://camel.apache.org/schema/spring" id="Auditing">
+  <camelContext xmlns="http://camel.apache.org/schema/spring" id="Auditing" streamCache="true">
 
-    <route id="audit">
+    <route id="edu.umd.lib.camel.routes.Audit">
       <from uri="activemq:queue:fedoraaudit"/>
+      <log loggingLevel="DEBUG" message="Receiving audit event for ${header.CamcelFcrepoUri}"/>
       <setHeader headerName="CamelAuditEventBaseUri">
         <constant>https://fcrepolocal/audit</constant>
       </setHeader>
@@ -27,7 +28,7 @@
       <to uri="activemq:queue:fedorapremis"/>
     </route>
 
-    <route id="premisDistribution">
+    <route id="edu.umd.lib.camel.routes.PremisDistribution">
       <from uri="activemq:queue:fedorapremis"/>
       <multicast parallelProcessing="true">
         <to uri="activemq:queue:triplestore.audit.data"/>
@@ -35,7 +36,7 @@
       </multicast>
     </route>
 
-    <route id="auditDatabase">
+    <route id="edu.umd.lib.camel.routes.AuditDatabase">
       <from uri="activemq:queue:audit.data"/>
       <setBody>
         <constant><![CDATA[
@@ -46,7 +47,7 @@
       <to uri="jdbc:auditDatabase?useHeadersAsParameters=true"/>
     </route>
 
-    <route id="auditTriplestore">
+    <route id="edu.umd.lib.camel.routes.AuditTriplestore">
       <from uri="activemq:queue:triplestore.audit.data"/>
       <removeHeaders pattern="*"/>
       <setHeader headerName="Content-Type">
