@@ -15,7 +15,7 @@
         PREFIX prov: <http://www.w3.org/ns/prov#>
         PREFIX earl: <http://www.w3.org/ns/earl#>
         CONSTRUCT {
-          ?audit a premis:Event, audit:ExternalEvent, prov:InstantaneousEvent ;
+          ?eventUri a premis:Event, audit:ExternalEvent, prov:InstantaneousEvent ;
             premis:hasEventType <http://id.loc.gov/vocabulary/preservation/eventType/fix> ;
             premis:hasEventRelatedObject ?target ;
             premis:hasEventDateTime ?now ;
@@ -28,7 +28,6 @@
             SELECT ?s ?p ?o
               (uri(strbefore(str(?s), "#")) AS ?target)
               (now() as ?now)
-              (uri(concat("http://localhost:8080/audit/", str(?uuid))) as ?audit)
               (if(?outcome = "SUCCESS", earl:passed, earl:failed) as ?outcome_term)
             WHERE {
               ?s ?p ?o
@@ -67,7 +66,8 @@
     <route id="edu.umd.lib.camel.routes.FixityChecker">
       <from uri="activemq:queue:fedorafixity"/>
       <setHeader headerName="CamelHttpUri">
-        <simple>${header.CamelFcrepoUri}</simple>
+        <simple>http://docker.for.mac.host.internal:8080/rest${header.CamelFcrepoPath}</simple>
+        <!-- simple>${header.CamelFcrepoUri}</simple -->
       </setHeader>
       <setHeader headerName="CamelHttpMethod">
         <constant>HEAD</constant>
@@ -78,7 +78,7 @@
         <log loggingLevel="DEBUG" message="${header.CamelFcrepoUri} is a binary, proceding with fixity check"/>
         <!-- TODO: get the fixity endpoint dynamically from the resource -->
         <setHeader headerName="CamelHttpUri">
-          <simple>${header.CamelFcrepoUri}/fcr:fixity</simple>
+          <simple>http://docker.for.mac.host.internal:8080/rest${header.CamelFcrepoPath}/fcr:fixity</simple>
         </setHeader>
         <setHeader headerName="CamelHttpMethod">
           <constant>GET</constant>
@@ -95,17 +95,17 @@
         <choice>
           <when>
             <xpath>/rdf:RDF/rdf:Description/premis:hasEventOutcome[text()='SUCCESS']</xpath>
-            <to uri="activemq:queue:fixitysuccess"/>
+            <to uri="direct:fixity.success"/>
           </when>
           <otherwise>
-            <to uri="activemq:queue:fixityfailure"/>
+            <to uri="direct:fixity.failure"/>
           </otherwise>
         </choice>
       </filter>
     </route>
 
     <route id="edu.umd.lib.camel.routes.FixitySuccessDistribution">
-      <from uri="activemq:queue:fixitysuccess"/>
+      <from uri="direct:fixity.success"/>
       <multicast parallelProcessing="true">
         <to uri="direct:fixity.log"/>
         <to uri="direct:fixity.audit"/>
@@ -113,7 +113,7 @@
     </route>
 
     <route id="edu.umd.lib.camel.routes.FixityFailureDistribution">
-      <from uri="activemq:queue:fixityfailure"/>
+      <from uri="direct:fixity.failure"/>
       <multicast parallelProcessing="true">
         <to uri="direct:fixity.log"/>
         <to uri="direct:fixity.audit"/>
@@ -127,19 +127,23 @@
         <groovy>"urn:uuid:" + UUID.randomUUID().toString()</groovy>
       </setHeader>
       <setHeader headerName="CamelAuditEventUri">
-        <simple>https://fcrepolocal/audit/${header.CamelAuditEventId}</simple>
+        <simple>${sysenv.AUDIT_EVENT_BASE_URI}${header.CamelAuditEventId}</simple>
       </setHeader>
       <setHeader headerName="CamelSparqlQueryBinding-eventUri">
         <header>CamelAuditEventUri</header>
       </setHeader>
       <process ref="fixityAuditSparqlProcessor"/>
-      <to uri="activemq:queue:fedorapremis"/>
+      <!-- produces an N-Triples formatted RDF document using the PREMIS vocabulary to describe the fixity check -->
+      <to uri="activemq:queue:triplestore.audit.data"/>
     </route>
 
     <route id="edu.umd.lib.camel.routes.FixityLog">
       <from uri="direct:fixity.log"/>
       <process ref="fixityLogSparqlProcessor"/>
-      <to uri="file:/apps/fedora/logs/?fileName=fixity.log&amp;fileExist=Append"/>
+      <setHeader headerName="CamelFileName">
+        <simple>${sysenv.FIXITY_LOG_DIR}/fixity.log</simple>
+      </setHeader>
+      <to uri="file://?fileExist=Append"/>
     </route>
 
     <route id="edu.umd.lib.camel.routes.FixityNotify">

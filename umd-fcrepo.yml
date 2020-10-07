@@ -15,7 +15,10 @@ services:
       - 61613:61613
       - 8161:8161
     environment:
+      - AUDIT_EVENT_BASE_URI=http://localhost/audit/
+      - AUDIT_TRIPLESTORE_UPDATE_URI=http://fuseki:3030/fcrepo-audit/update
       - BATCH_USER=CN=batchloader
+      - FIXITY_LOG_DIR=/tmp
       - PG_HOSTNAME=postgres
       - PG_PORT=5432
       - PG_USERNAME=fcrepo

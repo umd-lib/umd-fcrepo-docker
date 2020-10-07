@@ -21,10 +21,10 @@
     http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd
     http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
 
-  <!-- Allows us to use system properties as variables in this configuration file -->
+  <!-- Allows us to use environment variables in ${...} expressions in the Spring configuration (this includes in the Camel routes) -->
   <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
-    <property name="locations">
-      <value>file:${activemq.conf}/credentials.properties</value>
+    <property name="environment">
+      <bean class="org.springframework.core.env.StandardEnvironment"/>
     </property>
   </bean>
 
@@ -138,6 +138,7 @@
     Take a look at ${ACTIVEMQ_HOME}/conf/jetty.xml for more details
   -->
   <import resource="jetty.xml"/>
+
   <!-- Camel-based message routing -->
   <import resource="camel/routes.xml"/>
   <import resource="camel/audit.xml"/>
