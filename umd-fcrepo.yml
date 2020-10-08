@@ -26,8 +26,39 @@ services:
       - fuseki-data:/var/opt/fuseki
     ports:
       - 3030:3030
+  repository:
+    image: docker.lib.umd.edu/umd-fcrepo-webapp
+    configs:
+      - source: ip-mapping.properties
+        target: /etc/fcrepo/ip-mapping.properties
+    volumes:
+      - repository-data:/var/umd-fcrepo-webapp
+    ports:
+      - 8080:8080
+    environment:
+      - ACTIVEMQ_URL=tcp://activemq:61616
+      - CAS_URL_PREFIX=https://shib.idm.umd.edu/shibboleth-idp/profile/cas
+      - FCREPO_BASE_URL=http://localhost:8080/
+      - IP_MAPPING_FILE=/etc/fcrepo/ip-mapping.properties
+      - JWT_SECRET
+      - LDAP_URL=ldap://directory.umd.edu
+      - LDAP_BASE_DN=ou=people,dc=umd,dc=edu
+      - LDAP_BIND_DN=uid=libr-fedora,cn=auth,ou=ldap,dc=umd,dc=edu
+      - LDAP_BIND_PASSWORD
+      - LDAP_MEMBER_ATTRIBUTE=memberOf
+      - LDAP_ADMIN_GROUP=cn=Application_Roles:Libraries:FCREPO:FCREPO-Administrator,ou=grouper,ou=group,dc=umd,dc=edu
+      - LDAP_USER_GROUP=cn=Application_Roles:Libraries:FCREPO:FCREPO-User,ou=grouper,ou=group,dc=umd,dc=edu
+      - MODESHAPE_DB_DRIVER=org.postgresql.Driver
+      - MODESHAPE_DB_URL=jdbc:postgresql://postgres:5432/fcrepo_modeshape5
+      - MODESHAPE_DB_USERNAME=fcrepo
+      - MODESHAPE_DB_PASSWORD
+
+configs:
+  ip-mapping.properties:
+    file: ./repository/ip-mapping.properties
 volumes:
   postgres-data:
   activemq-data:
   solr-fedora4-data:
   fuseki-data:
+  repository-data:
