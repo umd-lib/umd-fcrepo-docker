@@ -1,5 +1,5 @@
 # generic Fuseki image
-FROM openjdk:8 AS fuseki
+FROM openjdk:8u265-jdk-buster AS fuseki
 
 ENV FUSEKI_VERSION 2.3.1
 ENV FUSEKI_HOME /opt/apache-jena-fuseki-${FUSEKI_VERSION}

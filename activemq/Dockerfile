@@ -1,4 +1,4 @@
-FROM openjdk:8
+FROM openjdk:8u265-jdk-buster
 
 ENV ACTIVEMQ_VERSION 5.16.0
 RUN curl -Ls http://archive.apache.org/dist/activemq/${ACTIVEMQ_VERSION}/apache-activemq-${ACTIVEMQ_VERSION}-bin.tar.gz \
