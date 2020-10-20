@@ -27,7 +27,7 @@ services:
     ports:
       - 3030:3030
   repository:
-    image: docker.lib.umd.edu/umd-fcrepo-webapp
+    image: docker.lib.umd.edu/fcrepo-webapp
     configs:
       - source: ip-mapping.properties
         target: /etc/fcrepo/ip-mapping.properties
