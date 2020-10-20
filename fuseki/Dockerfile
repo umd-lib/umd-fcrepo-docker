@@ -1,3 +1,11 @@
+# Dockerfile for the generating the Fuseki image
+#
+# To build:
+#
+# docker build -t docker.lib.umd.edu/fcrepo-fuseki:<VERSION> -f Dockerfile .
+#
+# where <VERSION> is the Docker image version to create.
+
 # generic Fuseki image
 FROM openjdk:8u265-jdk-buster AS fuseki
 

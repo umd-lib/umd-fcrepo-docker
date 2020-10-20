@@ -1,3 +1,10 @@
+# Dockerfile for the generating the ActiveMQ Docker image
+#
+# To build:
+#
+# docker build -t docker.lib.umd.edu/fcrepo-activemq:<VERSION> -f Dockerfile .
+#
+# where <VERSION> is the Docker image version to create.
 FROM openjdk:8u265-jdk-buster
 
 ENV ACTIVEMQ_VERSION 5.16.0
