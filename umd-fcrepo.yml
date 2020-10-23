@@ -17,13 +17,11 @@ services:
     environment:
       - AUDIT_EVENT_BASE_URI=http://localhost/audit/
       - AUDIT_TRIPLESTORE_UPDATE_URI=http://fuseki:3030/fcrepo-audit/update
-      - BATCH_USER=CN=batchloader
+      - BATCH_USER=plastron
       - CAMEL_AUTH_TOKEN
       - FIXITY_LOG_DIR=/tmp
       - PG_HOSTNAME=postgres
       - PG_PORT=5432
-      - PG_USERNAME=fcrepo
-      - PG_PASSWORD=fcrepo
       - PG_AUDIT_DATABASE=fcrepo_audit
       - PG_CAMEL_USERNAME=camel
       - PG_CAMEL_PASSWORD=camel
