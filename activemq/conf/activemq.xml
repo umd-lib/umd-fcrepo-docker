@@ -143,5 +143,6 @@
   <import resource="camel/routes.xml"/>
   <import resource="camel/audit.xml"/>
   <import resource="camel/fixity.xml"/>
-  <import resource="camel/solr.xml"/>
+  <import resource="camel/triplestore.xml"/>
+  <!-- import resource="camel/solr.xml"/ -->
 </beans>

@@ -18,6 +18,7 @@ services:
       - AUDIT_EVENT_BASE_URI=http://localhost/audit/
       - AUDIT_TRIPLESTORE_UPDATE_URI=http://fuseki:3030/fcrepo-audit/update
       - BATCH_USER=CN=batchloader
+      - CAMEL_AUTH_TOKEN
       - FIXITY_LOG_DIR=/tmp
       - PG_HOSTNAME=postgres
       - PG_PORT=5432
@@ -26,7 +27,9 @@ services:
       - PG_AUDIT_DATABASE=fcrepo_audit
       - PG_CAMEL_USERNAME=camel
       - PG_CAMEL_PASSWORD=camel
-
+      - REPO_EXTERNAL_URL=http://localhost:8080/rest
+      - REPO_INTERNAL_URL=http://repository:8080/rest
+      - INDEX_TRIPLESTORE_UPDATE_URI=http://fuseki:3030/fedora4/update
   solr-fedora4:
     image: docker.lib.umd.edu/fcrepo-solr-fedora4
     volumes:
