@@ -66,8 +66,7 @@
     <route id="edu.umd.lib.camel.routes.FixityChecker">
       <from uri="activemq:queue:fedorafixity"/>
       <setHeader headerName="CamelHttpUri">
-        <simple>http://docker.for.mac.host.internal:8080/rest${header.CamelFcrepoPath}</simple>
-        <!-- simple>${header.CamelFcrepoUri}</simple -->
+        <simple>${sysenv.REPO_INTERNAL_URL}${header.CamelFcrepoPath}</simple>
       </setHeader>
       <setHeader headerName="CamelHttpMethod">
         <constant>HEAD</constant>
@@ -75,10 +74,10 @@
       <to uri="http4:fcrepo"/>
       <filter>
         <simple>${header.Link} contains '&lt;http://www.w3.org/ns/ldp#NonRDFSource>;rel="type"'</simple>
-        <log loggingLevel="DEBUG" message="${header.CamelFcrepoUri} is a binary, proceding with fixity check"/>
+        <log loggingLevel="DEBUG" message="${header.CamelFcrepoUri} is a binary, proceeding with fixity check"/>
         <!-- TODO: get the fixity endpoint dynamically from the resource -->
         <setHeader headerName="CamelHttpUri">
-          <simple>http://docker.for.mac.host.internal:8080/rest${header.CamelFcrepoPath}/fcr:fixity</simple>
+          <simple>${sysenv.REPO_INTERNAL_URL}${header.CamelFcrepoPath}/fcr:fixity</simple>
         </setHeader>
         <setHeader headerName="CamelHttpMethod">
           <constant>GET</constant>
@@ -89,7 +88,7 @@
         </setHeader>
         <removeHeaders pattern="CamelFcrepo*"/>
         <setBody>
-          <constant></constant>
+          <constant/>
         </setBody>
         <to uri="http4:fcrepo"/>
         <choice>
