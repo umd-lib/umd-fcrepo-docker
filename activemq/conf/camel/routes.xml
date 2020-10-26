@@ -141,22 +141,24 @@
 
     <route id="edu.umd.lib.camel.routes.Binaries">
       <from uri="direct:binary"/>
-      <filter>
-        <!--
-          if the message is about a new binary, remove all headers except for CamelFcrepoUri,
-          clear the body, and send to the fixity candidates queue
-        -->
-        <simple>${header.CamelFcrepoEventName} == "create binary"</simple>
-        <log loggingLevel="INFO" message="New binary detected, sending to fixity candidates queue"/>
+      <multicast parallelProcessing="true">
+        <filter>
+          <!--
+            if the message is about a new binary, remove all headers except for CamelFcrepoUri,
+            clear the body, and send to the fixity candidates queue
+          -->
+          <simple>${header.CamelFcrepoEventName} == "create binary"</simple>
+          <log loggingLevel="INFO" message="New binary detected, sending to fixity candidates queue"/>
           <!-- clean out unnecessary headers (just leave the fcrepo URI), and clear the body -->
-        <removeHeaders pattern="*" excludePattern="CamelFcrepoUri"/>
-        <setBody>
-          <constant></constant>
-        </setBody>
-        <to uri="activemq:queue:fixitycandidates"/>
-      </filter>
-      <!-- send to fixity processing -->
-      <to uri="activemq:queue:fedorafixity"/>
+          <removeHeaders pattern="*" excludePattern="CamelFcrepoUri"/>
+          <setBody>
+            <constant/>
+          </setBody>
+          <to uri="activemq:queue:fixitycandidates"/>
+        </filter>
+        <!-- send to fixity processing -->
+        <to uri="activemq:queue:fedorafixity"/>
+      </multicast>
     </route>
 
   </camelContext>

@@ -71,6 +71,9 @@
       <setHeader headerName="CamelHttpMethod">
         <constant>HEAD</constant>
       </setHeader>
+      <setHeader headerName="Authorization">
+        <simple>Bearer ${sysenv.CAMEL_AUTH_TOKEN}</simple>
+      </setHeader>
       <to uri="http4:fcrepo"/>
       <filter>
         <simple>${header.Link} contains '&lt;http://www.w3.org/ns/ldp#NonRDFSource>;rel="type"'</simple>
@@ -86,17 +89,21 @@
         <setHeader headerName="Accept">
           <constant>application/rdf+xml</constant>
         </setHeader>
-        <removeHeaders pattern="CamelFcrepo*"/>
+        <removeHeaders pattern="CamelFcrepo*" excludePattern="CamelFcrepoUri"/>
         <setBody>
           <constant/>
         </setBody>
+        <log loggingLevel="DEBUG" message="Fixity check request sent to ${header.CamelHttpUri}"/>
         <to uri="http4:fcrepo"/>
         <choice>
           <when>
             <xpath>/rdf:RDF/rdf:Description/premis:hasEventOutcome[text()='SUCCESS']</xpath>
+            <log loggingLevel="INFO" message="Fixity check succeeded for ${header.CamelFcrepoUri}"/>
+            <log loggingLevel="DEBUG" message="Fixity check raw result: ${in.body}"/>
             <to uri="direct:fixity.success"/>
           </when>
           <otherwise>
+            <log loggingLevel="INFO" message="Fixity check failed for ${header.CamelFcrepoUri}"/>
             <to uri="direct:fixity.failure"/>
           </otherwise>
         </choice>
@@ -128,9 +135,10 @@
       <setHeader headerName="CamelAuditEventUri">
         <simple>${sysenv.AUDIT_EVENT_BASE_URI}${header.CamelAuditEventId}</simple>
       </setHeader>
-      <setHeader headerName="CamelSparqlQueryBinding-eventUri">
+      <setHeader headerName="CamelSparqlQueryBinding-URI-eventUri">
         <header>CamelAuditEventUri</header>
       </setHeader>
+      <log loggingLevel="INFO" message="Event URI: ${header.CamelAuditEventUri}"/>
       <process ref="fixityAuditSparqlProcessor"/>
       <!-- produces an N-Triples formatted RDF document using the PREMIS vocabulary to describe the fixity check -->
       <to uri="activemq:queue:triplestore.audit.data"/>
@@ -142,7 +150,8 @@
       <setHeader headerName="CamelFileName">
         <simple>${sysenv.FIXITY_LOG_DIR}/fixity.log</simple>
       </setHeader>
-      <to uri="file://?fileExist=Append"/>
+      <!-- to uri="file://?fileExist=Append"/ -->
+      <to uri="activemq:queue:fixity.log.result"/>
     </route>
 
     <route id="edu.umd.lib.camel.routes.FixityNotify">
@@ -150,7 +159,7 @@
       <!--
       <to uri="smtp://localhost?To=lib-fcrepo-notify@umd.edu&amp;From=fedora@{{fcrepo.server}}&amp;Subject=Fixity%20Failure"/>
       -->
-      <to uri="activemq:queue:fixitynotifyresult"/>
+      <to uri="activemq:queue:fixity.notify.result"/>
     </route>
 
   </camelContext>
