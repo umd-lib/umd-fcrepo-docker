@@ -24,17 +24,32 @@
 
     <route id="edu.umd.lib.camel.routes.IndexTriplestoreCreate">
       <from uri="direct:index.triplestore.create"/>
+      <!-- check whether this is a binary or not -->
       <setHeader headerName="CamelHttpUri">
         <simple>${sysenv.REPO_INTERNAL_URL}${header.CamelFcrepoPath}</simple>
       </setHeader>
       <setHeader headerName="CamelHttpMethod">
-        <constant>GET</constant>
-      </setHeader>
-      <setHeader headerName="Accept">
-        <constant>application/n-triples</constant>
+        <constant>HEAD</constant>
       </setHeader>
       <setHeader headerName="Authorization">
         <simple>Bearer ${sysenv.CAMEL_AUTH_TOKEN}</simple>
+      </setHeader>
+      <to uri="http4:fcrepo"/>
+      <filter>
+        <simple>${header.Link} contains '&lt;http://www.w3.org/ns/ldp#NonRDFSource>;rel="type"'</simple>
+        <setHeader headerName="CamelHttpUri">
+          <simple>${sysenv.REPO_INTERNAL_URL}${header.CamelFcrepoPath}/fcr:metadata</simple>
+        </setHeader>
+      </filter>
+      <!-- get the RDF to insert into the triplestore -->
+      <setHeader headerName="CamelHttpMethod">
+        <constant>GET</constant>
+      </setHeader>
+      <setHeader headerName="Authorization">
+        <simple>Bearer ${sysenv.CAMEL_AUTH_TOKEN}</simple>
+      </setHeader>
+      <setHeader headerName="Accept">
+        <constant>application/n-triples</constant>
       </setHeader>
       <setHeader headerName="X-Forwarded-Host">
         <simple>${bean:repoExternalURL.authority}</simple>
