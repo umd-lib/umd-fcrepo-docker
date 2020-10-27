@@ -9,13 +9,12 @@ FROM maven:3.6.3-jdk-8-slim AS dependencies
 
 RUN mkdir -p /var/jars
 COPY pom.xml /var/jars
-COPY maven-settings.xml /var/jars
 WORKDIR /var/jars
 
 # fetch JARs required for running the Camel routes, but exclude the org.slf4j
 # group to avoid a SLF4J conflict with ActiveMQ's own bundled SLF4J library; see
 # also http://www.slf4j.org/codes.html#log4jDelegationLoop
-RUN mvn --settings /var/jars/maven-settings.xml dependency:copy-dependencies -DexcludeGroupIds=org.slf4j
+RUN mvn dependency:copy-dependencies -DexcludeGroupIds=org.slf4j
 
 FROM openjdk:8u265-jdk-buster
 
