@@ -65,6 +65,14 @@
       <groupId>org.fcrepo.camel</groupId>
       <artifactId>fcrepo-camel</artifactId>
       <version>${fcrepo-camel.version}</version>
+      <exclusions>
+        <!-- jena-osgi is not needed because we are not using Karaf, and
+             it has jar versions that interfere with umd-camel-processors  -->
+        <exclusion>
+          <groupId>org.apache.jena</groupId>
+          <artifactId>jena-osgi</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
   </dependencies>
 
