@@ -7,6 +7,14 @@
     <constructor-arg value="${REPO_EXTERNAL_URL}"/>
   </bean>
 
+  <bean id="addBearerAuthorization" class="edu.umd.lib.camel.processors.AddBearerAuthorizationProcessor">
+    <property name="authTokenService">
+      <bean class="edu.umd.lib.fcrepo.AuthTokenService">
+        <property name="secret" value="${JWT_SECRET}"/>
+      </bean>
+    </property>
+  </bean>
+
   <camelContext xmlns="http://camel.apache.org/schema/spring" id="Triplestore" streamCache="true">
     <route id="edu.umd.lib.camel.routes.TriplestoreIndexing">
       <from uri="activemq:queue:fedoratriplestore"/>
@@ -24,6 +32,8 @@
 
     <route id="edu.umd.lib.camel.routes.IndexTriplestoreCreate">
       <from uri="direct:index.triplestore.create"/>
+      <!-- generate a Bearer auth token for the Authorization header -->
+      <process ref="addBearerAuthorization"/>
       <!-- check whether this is a binary or not -->
       <setHeader headerName="CamelHttpUri">
         <simple>${sysenv.REPO_INTERNAL_URL}${header.CamelFcrepoPath}</simple>
@@ -31,9 +41,7 @@
       <setHeader headerName="CamelHttpMethod">
         <constant>HEAD</constant>
       </setHeader>
-      <setHeader headerName="Authorization">
-        <simple>Bearer ${sysenv.CAMEL_AUTH_TOKEN}</simple>
-      </setHeader>
+      <!-- send the HEAD request to fcrepo -->
       <to uri="http4:fcrepo"/>
       <filter>
         <simple>${header.Link} contains '&lt;http://www.w3.org/ns/ldp#NonRDFSource>;rel="type"'</simple>
@@ -44,9 +52,6 @@
       <!-- get the RDF to insert into the triplestore -->
       <setHeader headerName="CamelHttpMethod">
         <constant>GET</constant>
-      </setHeader>
-      <setHeader headerName="Authorization">
-        <simple>Bearer ${sysenv.CAMEL_AUTH_TOKEN}</simple>
       </setHeader>
       <setHeader headerName="Accept">
         <constant>application/n-triples</constant>
