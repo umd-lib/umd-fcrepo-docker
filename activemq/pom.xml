@@ -37,6 +37,18 @@
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-http4</artifactId>
       <version>${camel.version}</version>
+      <!--
+        An implementation of the servlet-api (tomcat-servlet-api) is
+        provided by the ActiveMQ distribution, so excluding the
+        javax.servlet-api to remove warnings about duplicate classes when
+        running ActiveMQ
+      -->
+      <exclusions>
+        <exclusion>
+          <groupId>javax.servlet</groupId>
+          <artifactId>javax.servlet-api</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.camel</groupId>
