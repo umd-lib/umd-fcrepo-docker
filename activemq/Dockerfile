@@ -9,12 +9,13 @@ FROM maven:3.6.3-jdk-8-slim AS dependencies
 
 RUN mkdir -p /var/jars
 COPY pom.xml /var/jars
+COPY maven-settings.xml /var/jars
 WORKDIR /var/jars
 
 # fetch JARs required for running the Camel routes, but exclude the org.slf4j
 # group to avoid a SLF4J conflict with ActiveMQ's own bundled SLF4J library; see
 # also http://www.slf4j.org/codes.html#log4jDelegationLoop
-RUN mvn dependency:copy-dependencies -DexcludeGroupIds=org.slf4j
+RUN mvn --settings /var/jars/maven-settings.xml dependency:copy-dependencies -DexcludeGroupIds=org.slf4j
 
 FROM openjdk:8u265-jdk-buster
 
@@ -27,10 +28,6 @@ ENV ACTIVEMQ_DATA /var/opt/activemq
 ENV ACTIVEMQ_MAX_DISK 16G
 
 COPY --from=dependencies /var/jars/target/dependency/*.jar $ACTIVEMQ_HOME/lib/optional/
-
-# XXX: workaround until we can figure out the best way to get the latest
-# snapshot from Nexus
-COPY jars/*.jar $ACTIVEMQ_HOME/lib/optional/
 
 COPY conf/ $ACTIVEMQ_HOME/conf/
 COPY env $ACTIVEMQ_HOME/bin/env

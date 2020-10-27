@@ -16,6 +16,7 @@
     <camel.version>2.25.2</camel.version>
     <fcrepo-camel.version>4.5.0</fcrepo-camel.version>
     <postgresql.version>42.2.16</postgresql.version>
+    <umd-camel-processors.version>1.0.0-SNAPSHOT</umd-camel-processors.version>
   </properties>
 
   <dependencies>
@@ -51,6 +52,12 @@
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-solr</artifactId>
       <version>${camel.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>edu.umd.lib</groupId>
+      <artifactId>umd-camel-processors</artifactId>
+      <version>${umd-camel-processors.version}</version>
     </dependency>
 
     <!-- fcrepo Camel library -->
