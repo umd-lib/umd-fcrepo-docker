@@ -1,0 +1,167 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+  xmlns:premis="http://www.loc.gov/premis/rdf/v1#"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+  http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+  <!-- SPARQL query processor to transform the fixity result from fcrepo into a PREMIS event to send to the audit triplestore -->
+  <bean id="fixityAuditSparqlProcessor" class="edu.umd.lib.camel.processors.SparqlQueryProcessor">
+    <property name="query">
+      <value><![CDATA[
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+        PREFIX premis: <http://www.loc.gov/premis/rdf/v1#>
+        PREFIX audit: <http://fedora.info/definitions/v4/audit#>
+        PREFIX prov: <http://www.w3.org/ns/prov#>
+        PREFIX earl: <http://www.w3.org/ns/earl#>
+        CONSTRUCT {
+          ?eventUri a premis:Event, audit:ExternalEvent, prov:InstantaneousEvent ;
+            premis:hasEventType <http://id.loc.gov/vocabulary/preservation/eventType/fix> ;
+            premis:hasEventRelatedObject ?target ;
+            premis:hasEventDateTime ?now ;
+            premis:hasEventOutcome ?outcome_term ;
+            premis:hasEventOutcomeDetail ?s .
+          ?s ?p ?o .
+        }
+        WHERE {
+          {
+            SELECT ?s ?p ?o
+              (uri(strbefore(str(?s), "#")) AS ?target)
+              (now() as ?now)
+              (if(?outcome = "SUCCESS", earl:passed, earl:failed) as ?outcome_term)
+            WHERE {
+              ?s ?p ?o
+              { SELECT ?s (uuid() as ?uuid) WHERE { ?s a premis:Fixity } LIMIT 1 }
+              { SELECT ?outcome WHERE { ?x premis:hasEventOutcome ?outcome } LIMIT 1 }
+            }
+          }
+        }
+      ]]></value>
+    </property>
+    <property name="resultsFormatName" value="n-triples"/>
+  </bean>
+
+  <!-- SPARQL query processor to transform the fixity result from fcrepo into a CSV line for sending to a flat log -->
+  <bean id="fixityLogSparqlProcessor" class="edu.umd.lib.camel.processors.SparqlQueryProcessor">
+    <property name="query">
+      <value><![CDATA[
+        PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+        SELECT (now() as ?time) ?uri (group_concat(?outcome;separator='|') as ?outcomes) ?size ?messageDigest
+        WHERE {
+          ?uri <http://www.loc.gov/premis/rdf/v1#hasFixity> ?fixity_uri .
+          ?fixity_uri <http://www.loc.gov/premis/rdf/v1#hasEventOutcome> ?outcome .
+          ?fixity_uri <http://www.loc.gov/premis/rdf/v1#hasSize> ?_size .
+          ?fixity_uri <http://www.loc.gov/premis/rdf/v1#hasMessageDigest> ?messageDigest
+          bind( xsd:integer(?_size) as ?size)
+        }
+        GROUP BY ?uri ?size ?messageDigest
+      ]]></value>
+    </property>
+    <property name="resultsFormatName" value="csvWithoutHeader"/>
+  </bean>
+
+  <!-- must enable stream caching since multiple downstream endpoints need to each read the message body in parallel -->
+  <camelContext xmlns="http://camel.apache.org/schema/spring" id="FixityChecking" streamCache="true">
+
+    <route id="edu.umd.lib.camel.routes.FixityChecker">
+      <from uri="activemq:queue:fedorafixity"/>
+      <setHeader headerName="CamelHttpUri">
+        <simple>${sysenv.REPO_INTERNAL_URL}${header.CamelFcrepoPath}</simple>
+      </setHeader>
+      <setHeader headerName="CamelHttpMethod">
+        <constant>HEAD</constant>
+      </setHeader>
+      <setHeader headerName="Authorization">
+        <simple>Bearer ${sysenv.CAMEL_AUTH_TOKEN}</simple>
+      </setHeader>
+      <to uri="http4:fcrepo"/>
+      <filter>
+        <simple>${header.Link} contains '&lt;http://www.w3.org/ns/ldp#NonRDFSource>;rel="type"'</simple>
+        <log loggingLevel="DEBUG" message="${header.CamelFcrepoUri} is a binary, proceeding with fixity check"/>
+        <!-- TODO: get the fixity endpoint dynamically from the resource -->
+        <setHeader headerName="CamelHttpUri">
+          <simple>${sysenv.REPO_INTERNAL_URL}${header.CamelFcrepoPath}/fcr:fixity</simple>
+        </setHeader>
+        <setHeader headerName="CamelHttpMethod">
+          <constant>GET</constant>
+        </setHeader>
+        <!-- must use RDF/XML so we can do a quick check of success or failure using XPath -->
+        <setHeader headerName="Accept">
+          <constant>application/rdf+xml</constant>
+        </setHeader>
+        <removeHeaders pattern="CamelFcrepo*" excludePattern="CamelFcrepoUri"/>
+        <setBody>
+          <constant/>
+        </setBody>
+        <log loggingLevel="DEBUG" message="Fixity check request sent to ${header.CamelHttpUri}"/>
+        <to uri="http4:fcrepo"/>
+        <choice>
+          <when>
+            <xpath>/rdf:RDF/rdf:Description/premis:hasEventOutcome[text()='SUCCESS']</xpath>
+            <log loggingLevel="INFO" message="Fixity check succeeded for ${header.CamelFcrepoUri}"/>
+            <log loggingLevel="DEBUG" message="Fixity check raw result: ${in.body}"/>
+            <to uri="direct:fixity.success"/>
+          </when>
+          <otherwise>
+            <log loggingLevel="INFO" message="Fixity check failed for ${header.CamelFcrepoUri}"/>
+            <to uri="direct:fixity.failure"/>
+          </otherwise>
+        </choice>
+      </filter>
+    </route>
+
+    <route id="edu.umd.lib.camel.routes.FixitySuccessDistribution">
+      <from uri="direct:fixity.success"/>
+      <multicast parallelProcessing="true">
+        <to uri="direct:fixity.log"/>
+        <to uri="direct:fixity.audit"/>
+      </multicast>
+    </route>
+
+    <route id="edu.umd.lib.camel.routes.FixityFailureDistribution">
+      <from uri="direct:fixity.failure"/>
+      <multicast parallelProcessing="true">
+        <to uri="direct:fixity.log"/>
+        <to uri="direct:fixity.audit"/>
+        <to uri="direct:fixity.notify"/>
+      </multicast>
+    </route>
+
+    <route id="edu.umd.lib.camel.routes.FixityAudit">
+      <from uri="direct:fixity.audit"/>
+      <setHeader headerName="CamelAuditEventId">
+        <groovy>"urn:uuid:" + UUID.randomUUID().toString()</groovy>
+      </setHeader>
+      <setHeader headerName="CamelAuditEventUri">
+        <simple>${sysenv.AUDIT_EVENT_BASE_URI}${header.CamelAuditEventId}</simple>
+      </setHeader>
+      <setHeader headerName="CamelSparqlQueryBinding-URI-eventUri">
+        <header>CamelAuditEventUri</header>
+      </setHeader>
+      <log loggingLevel="INFO" message="Event URI: ${header.CamelAuditEventUri}"/>
+      <process ref="fixityAuditSparqlProcessor"/>
+      <!-- produces an N-Triples formatted RDF document using the PREMIS vocabulary to describe the fixity check -->
+      <to uri="activemq:queue:triplestore.audit.data"/>
+    </route>
+
+    <route id="edu.umd.lib.camel.routes.FixityLog">
+      <from uri="direct:fixity.log"/>
+      <process ref="fixityLogSparqlProcessor"/>
+      <setHeader headerName="CamelFileName">
+        <simple>${sysenv.FIXITY_LOG_DIR}/fixity.log</simple>
+      </setHeader>
+      <!-- to uri="file://?fileExist=Append"/ -->
+      <to uri="activemq:queue:fixity.log.result"/>
+    </route>
+
+    <route id="edu.umd.lib.camel.routes.FixityNotify">
+      <from uri="direct:fixity.notify"/>
+      <!--
+      <to uri="smtp://localhost?To=lib-fcrepo-notify@umd.edu&amp;From=fedora@{{fcrepo.server}}&amp;Subject=Fixity%20Failure"/>
+      -->
+      <to uri="activemq:queue:fixity.notify.result"/>
+    </route>
+
+  </camelContext>
+
+</beans>

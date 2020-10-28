@@ -18,12 +18,13 @@
   xmlns="http://www.springframework.org/schema/beans"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
-  http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd">
+    http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd
+    http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
 
-  <!-- Allows us to use system properties as variables in this configuration file -->
-  <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
-    <property name="locations">
-      <value>file:${activemq.conf}/credentials.properties</value>
+  <!-- Allows us to use environment variables in ${...} expressions in the Spring configuration (this includes in the Camel routes) -->
+  <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+    <property name="environment">
+      <bean class="org.springframework.core.env.StandardEnvironment"/>
     </property>
   </bean>
 
@@ -138,4 +139,10 @@
   -->
   <import resource="jetty.xml"/>
 
+  <!-- Camel-based message routing -->
+  <import resource="camel/routes.xml"/>
+  <import resource="camel/audit.xml"/>
+  <import resource="camel/fixity.xml"/>
+  <import resource="camel/triplestore.xml"/>
+  <!-- import resource="camel/solr.xml"/ -->
 </beans>
