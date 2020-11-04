@@ -20,6 +20,7 @@ docker build -t docker.lib.umd.edu/fcrepo-postgres postgres
 docker build -t docker.lib.umd.edu/fcrepo-activemq activemq
 docker build -t docker.lib.umd.edu/fcrepo-solr-fedora4 solr-fedora4
 docker build -t docker.lib.umd.edu/fcrepo-fuseki fuseki
+docker build -t docker.lib.umd.edu/fcrepo-fixity fixity
 ```
 
 Export environment variables (for the repository container):
@@ -36,6 +37,29 @@ Deploy the stack:
 
 ```bash
 docker stack deploy --with-registry-auth -c umd-fcrepo.yml umd-fcrepo
+```
+
+### Fixity checking
+
+The "docker.lib.umd.edu/fcrepo-fixity" image can be used to run fixity checking,
+using the command:
+
+```bash
+docker run docker.lib.umd.edu/fcrepo-fixity:latest <SCRIPT_ARGS>
+```
+
+where <SCRIPT_ARGS> are the arguments to pass to the script.
+
+For example, when running against the Docker stack on a Mac:
+
+```bash
+docker run docker.lib.umd.edu/fcrepo-fixity:latest --server host.docker.internal:61613
+```
+
+Multiple command line options can be provided to the script, i.e.:
+
+```bash
+docker run docker.lib.umd.edu/fcrepo-fixity:latest --server host.docker.internal:61613 --age P6M
 ```
 
 ### Application URLs
