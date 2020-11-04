@@ -28,5 +28,8 @@ CMD ["./fuseki", "run"]
 # UMD-specific configuration
 FROM fuseki
 
+# Allow JRE to use up to 75% of the RAM in the container
+ENV JAVA_OPTIONS=-XX:MaxRAMPercentage=75.0
+
 COPY configuration/* $FUSEKI_BASE/configuration/
 COPY shiro.ini $FUSEKI_BASE/
