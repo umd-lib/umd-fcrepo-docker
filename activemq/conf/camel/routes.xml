@@ -95,7 +95,7 @@
             || ${header.CamelFcrepoEventType} contains "https://www.w3.org/ns/activitystreams#Update"
           </simple>
           <setHeader headerName="CamelFcrepoEventName">
-            <constant>modify</constant>
+            <constant>update</constant>
           </setHeader>
         </when>
       </choice>

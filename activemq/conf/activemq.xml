@@ -140,6 +140,14 @@
   <import resource="jetty.xml"/>
 
   <!-- Camel-based message routing -->
+  <!-- common Authorization header generator -->
+  <bean id="addBearerAuthorization" class="edu.umd.lib.camel.processors.AddBearerAuthorizationProcessor">
+    <property name="authTokenService">
+      <bean class="edu.umd.lib.fcrepo.AuthTokenService">
+        <property name="secret" value="${JWT_SECRET}"/>
+      </bean>
+    </property>
+  </bean>
   <import resource="camel/routes.xml"/>
   <import resource="camel/audit.xml"/>
   <import resource="camel/fixity.xml"/>
