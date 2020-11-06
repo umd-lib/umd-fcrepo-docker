@@ -71,9 +71,7 @@
       <setHeader headerName="CamelHttpMethod">
         <constant>HEAD</constant>
       </setHeader>
-      <setHeader headerName="Authorization">
-        <simple>Bearer ${sysenv.CAMEL_AUTH_TOKEN}</simple>
-      </setHeader>
+      <process ref="addBearerAuthorization"/>
       <to uri="http4:fcrepo"/>
       <filter>
         <simple>${header.Link} contains '&lt;http://www.w3.org/ns/ldp#NonRDFSource>;rel="type"'</simple>
@@ -95,11 +93,11 @@
         </setBody>
         <log loggingLevel="DEBUG" message="Fixity check request sent to ${header.CamelHttpUri}"/>
         <to uri="http4:fcrepo"/>
+        <log loggingLevel="DEBUG" message="Fixity check raw result: ${in.body}"/>
         <choice>
           <when>
             <xpath>/rdf:RDF/rdf:Description/premis:hasEventOutcome[text()='SUCCESS']</xpath>
             <log loggingLevel="INFO" message="Fixity check succeeded for ${header.CamelFcrepoUri}"/>
-            <log loggingLevel="DEBUG" message="Fixity check raw result: ${in.body}"/>
             <to uri="direct:fixity.success"/>
           </when>
           <otherwise>

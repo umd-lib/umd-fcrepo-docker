@@ -7,13 +7,7 @@
     <constructor-arg value="${REPO_EXTERNAL_URL}"/>
   </bean>
 
-  <bean id="addBearerAuthorization" class="edu.umd.lib.camel.processors.AddBearerAuthorizationProcessor">
-    <property name="authTokenService">
-      <bean class="edu.umd.lib.fcrepo.AuthTokenService">
-        <property name="secret" value="${JWT_SECRET}"/>
-      </bean>
-    </property>
-  </bean>
+  <bean id="descriptionURI" class="edu.umd.lib.camel.processors.DescriptionURI"/>
 
   <camelContext xmlns="http://camel.apache.org/schema/spring" id="Triplestore" streamCache="true">
     <route id="edu.umd.lib.camel.routes.TriplestoreIndexing">
@@ -24,14 +18,18 @@
           <to uri="direct:index.triplestore.create"/>
         </when>
         <when>
+          <simple>${header.CamelFcrepoEventName} starts with "update"</simple>
+          <to uri="direct:index.triplestore.update"/>
+        </when>
+        <when>
           <simple>${header.CamelFcrepoEventName} starts with "delete"</simple>
           <to uri="direct:index.triplestore.delete"/>
         </when>
       </choice>
     </route>
 
-    <route id="edu.umd.lib.camel.routes.IndexTriplestoreCreate">
-      <from uri="direct:index.triplestore.create"/>
+    <route id="edu.umd.lib.camel.routes.GetRDF">
+      <from uri="direct:getRDF"/>
       <!-- generate a Bearer auth token for the Authorization header -->
       <process ref="addBearerAuthorization"/>
       <!-- check whether this is a binary or not -->
@@ -42,11 +40,14 @@
         <constant>HEAD</constant>
       </setHeader>
       <!-- send the HEAD request to fcrepo -->
+      <log loggingLevel="DEBUG" message="HEAD ${header.CamelHttpUri}"/>
       <to uri="http4:fcrepo"/>
+      <!-- parse the Link headers to check for rel="describedby" -->
+      <process ref="descriptionURI"/>
       <filter>
-        <simple>${header.Link} contains '&lt;http://www.w3.org/ns/ldp#NonRDFSource>;rel="type"'</simple>
+        <simple>${header.DescribedBy}</simple>
         <setHeader headerName="CamelHttpUri">
-          <simple>${sysenv.REPO_INTERNAL_URL}${header.CamelFcrepoPath}/fcr:metadata</simple>
+          <header>DescribedBy</header>
         </setHeader>
       </filter>
       <!-- get the RDF to insert into the triplestore -->
@@ -64,8 +65,30 @@
       </setHeader>
       <log loggingLevel="DEBUG" message="GET ${header.CamelHttpUri}"/>
       <to uri="http4:fcrepo"/>
+    </route>
+
+    <route id="edu.umd.lib.camel.routes.IndexTriplestoreCreate">
+      <from uri="direct:index.triplestore.create"/>
+      <to uri="direct:getRDF"/>
+      <!-- insert into the triplestore -->
       <setBody>
         <simple>INSERT DATA {\n${body}}</simple>
+      </setBody>
+      <to uri="direct:index.triplestore.http"/>
+    </route>
+
+    <route id="edu.umd.lib.camel.routes.IndexTriplestoreUpdate">
+      <from uri="direct:index.triplestore.update"/>
+      <to uri="direct:getRDF"/>
+      <!-- replace current triples in triplestore -->
+      <setBody>
+        <simple><![CDATA[
+DELETE { <${header.CamelFcrepoUri}> ?p ?o }
+INSERT {
+${body}
+}
+WHERE  { <${header.CamelFcrepoUri}> ?p ?o }
+        ]]></simple>
       </setBody>
       <to uri="direct:index.triplestore.http"/>
     </route>

@@ -14,7 +14,7 @@ WORKDIR /var/jars
 # fetch JARs required for running the Camel routes, but exclude the org.slf4j
 # group to avoid a SLF4J conflict with ActiveMQ's own bundled SLF4J library; see
 # also http://www.slf4j.org/codes.html#log4jDelegationLoop
-RUN mvn dependency:copy-dependencies -DexcludeGroupIds=org.slf4j
+RUN mvn dependency:copy-dependencies -DexcludeGroupIds=org.slf4j,ch.qos.logback
 
 FROM openjdk:8u265-jdk-buster
 

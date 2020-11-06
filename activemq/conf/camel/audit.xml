@@ -34,13 +34,13 @@
           </setHeader>
         </when>
         <when>
-          <simple>${headers.CamelFcrepoEventName} == "modify binary"</simple>
+          <simple>${headers.CamelFcrepoEventName} == "update binary"</simple>
           <setHeader headerName="CamelAuditEventType">
             <constant>http://fedora.info/definitions/v4/audit#contentModification</constant>
           </setHeader>
         </when>
         <when>
-          <simple>${headers.CamelFcrepoEventName} == "modify RDF"</simple>
+          <simple>${headers.CamelFcrepoEventName} == "update RDF"</simple>
           <setHeader headerName="CamelAuditEventType">
             <constant>http://fedora.info/definitions/v4/audit#metadataModification</constant>
           </setHeader>
