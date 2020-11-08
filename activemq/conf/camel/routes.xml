@@ -133,8 +133,7 @@
           <simple>${headers.CamelFcrepoBinary}</simple>
           <to uri="direct:binary"/>
         </filter>
-        <to uri="activemq:queue:fedorasolr"/>
-        <to uri="activemq:queue:fedoratriplestore"/>
+        <to uri="activemq:queue:index"/>
         <to uri="activemq:queue:fedoraaudit"/>
       </multicast>
     </route>

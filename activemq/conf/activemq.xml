@@ -149,6 +149,7 @@
     </property>
   </bean>
   <import resource="camel/routes.xml"/>
+  <import resource="camel/indexing.xml"/>
   <import resource="camel/audit.xml"/>
   <import resource="camel/fixity.xml"/>
   <import resource="camel/triplestore.xml"/>
