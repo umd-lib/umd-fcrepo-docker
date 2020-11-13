@@ -87,6 +87,12 @@
         <setHeader headerName="Accept">
           <constant>application/rdf+xml</constant>
         </setHeader>
+        <setHeader headerName="X-Forwarded-Host">
+          <simple>${bean:repoExternalURL.authority}</simple>
+        </setHeader>
+        <setHeader headerName="X-Forwarded-Proto">
+          <simple>${bean:repoExternalURL.protocol}</simple>
+        </setHeader>
         <removeHeaders pattern="CamelFcrepo*" excludePattern="CamelFcrepoUri"/>
         <setBody>
           <constant/>
@@ -146,10 +152,12 @@
       <from uri="direct:fixity.log"/>
       <process ref="fixityLogSparqlProcessor"/>
       <setHeader headerName="CamelFileName">
-        <simple>${sysenv.FIXITY_LOG_DIR}/fixity.log</simple>
+        <groovy><![CDATA[
+        import java.text.SimpleDateFormat
+        (new SimpleDateFormat("yyyy-MM-dd-'fixity.log'")).format(new Date())
+        ]]></groovy>
       </setHeader>
-      <!-- to uri="file://?fileExist=Append"/ -->
-      <to uri="activemq:queue:fixity.log.result"/>
+      <to uri="file:///var/log/fixity?fileExist=Append"/>
     </route>
 
     <route id="edu.umd.lib.camel.routes.FixityNotify">

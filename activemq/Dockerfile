@@ -32,6 +32,7 @@ COPY conf/ $ACTIVEMQ_HOME/conf/
 COPY env $ACTIVEMQ_HOME/bin/env
 
 VOLUME /var/opt/activemq
+VOLUME /var/log/fixity
 EXPOSE 61613
 EXPOSE 61616
 EXPOSE 8161
