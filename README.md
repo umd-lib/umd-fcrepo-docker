@@ -21,6 +21,7 @@ docker build -t docker.lib.umd.edu/fcrepo-activemq activemq
 docker build -t docker.lib.umd.edu/fcrepo-solr-fedora4 solr-fedora4
 docker build -t docker.lib.umd.edu/fcrepo-fuseki fuseki
 docker build -t docker.lib.umd.edu/fcrepo-fixity fixity
+docker build -t docker.lib.umd.edu/fcrepo-mail mail
 ```
 
 Export environment variables (for the repository container):
@@ -62,6 +63,17 @@ Multiple command line options can be provided to the script, i.e.:
 docker run docker.lib.umd.edu/fcrepo-fixity:latest --server host.docker.internal:61613 --age P6M
 ```
 
+### Email Notifications
+
+This stack uses a debugging SMTP server implementation as the destination server
+for outgoing fixity failure notification emails. This server uses the Python [aiosmtpd]
+library, and does not actually deliver the emails. Instead, it just echoes the contents
+(headers and body) to STDOUT. To monitor these emails, use:
+
+```bash
+docker service logs -f umd-fcrepo_mail
+```
+
 ### Application URLs
 
 * ActiveMQ admin console: <http://localhost:8161/admin>
@@ -79,5 +91,7 @@ files for each image for more information:
 * [ActiveMQ](activemq/README.md)
 * [Solr (fedora4 Core)](solr-fedora4/README.md)
 * [Fuseki](fuseki/README.md)
+* [Mail](mail/README.md)
 
 [umd-fcrepo-webapp]: https://github.com/umd-lib/umd-fcrepo-webapp
+[aiosmtpd]: https://aiosmtpd.readthedocs.io/en/latest/README.html
