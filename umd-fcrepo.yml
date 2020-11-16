@@ -10,6 +10,7 @@ services:
     image: docker.lib.umd.edu/fcrepo-activemq
     volumes:
       - activemq-data:/var/opt/activemq
+      - fixity-log-data:/var/log/fixity
     ports:
       - 61616:61616
       - 61613:61613
@@ -79,6 +80,7 @@ configs:
 volumes:
   postgres-data:
   activemq-data:
+  fixity-log-data:
   solr-fedora4-data:
   fuseki-data:
   repository-data:
