@@ -16,7 +16,7 @@
   <field name="display_title" type="string" indexed="true" stored="true"/>
   <field name="author" type="text_general" indexed="true" stored="true" multiValued="true"/>
   <field name="recipient" type="text_general" indexed="true" stored="true" multiValued="true"/>
-  <field name="date" type="string" indexed="true" stored="true" multiValued="false"/>
+  <field name="date" type="date" indexed="true" stored="true" multiValued="false"/>
   <field name="date_decade" type="string" indexed="true" stored="true" multiValued="false"/>
   <field name="date_year" type="int" indexed="true" stored="true" multiValued="false"/>
   <field name="date_month" type="string" indexed="true" stored="true" multiValued="false"/>
@@ -30,8 +30,6 @@
   <field name="pcdm_member_of" type="string" indexed="true" stored="true" multiValued="true"/>
   <field name="pcdm_file_of" type="string" indexed="true" stored="true" multiValued="false"/>
   <field name="pcdm_related_object_of" type="string" indexed="true" stored="true" multiValued="true"/>
-  <field name="member_of_pcdm_object" type="string" indexed="true" stored="true" multiValued="true"/>
-  <field name="member_of_pcdm_collection" type="string" indexed="true" stored="true" multiValued="true"/>
   <field name="component" type="text_general" indexed="true" stored="true" multiValued="false"/>
   <field name="alt_title" type="text_general" indexed="true" stored="true" multiValued="true"/>
   <field name="provider" type="text_general" indexed="true" stored="true" multiValued="true"/>
