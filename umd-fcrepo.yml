@@ -28,6 +28,7 @@ services:
       - JWT_SECRET
       - REPO_EXTERNAL_URL=http://localhost:8080/rest
       - REPO_INTERNAL_URL=http://repository:8080/rest
+      - SMTP_SERVER=mail:8025
   solr-fedora4:
     image: docker.lib.umd.edu/fcrepo-solr-fedora4
     volumes:
@@ -66,6 +67,11 @@ services:
       - MODESHAPE_DB_URL=jdbc:postgresql://postgres:5432/fcrepo_modeshape5
       - MODESHAPE_DB_USERNAME=fcrepo
       - MODESHAPE_DB_PASSWORD
+  mail:
+    # debugging mail server for local development
+    image: docker.lib.umd.edu/fcrepo-mail
+    ports:
+      - 8025:8025
 
 configs:
   ip-mapping.properties:

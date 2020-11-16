@@ -3,10 +3,6 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
   http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
 
-  <bean id="repoExternalURL" class="java.net.URL">
-    <constructor-arg value="${REPO_EXTERNAL_URL}"/>
-  </bean>
-
   <bean id="descriptionURI" class="edu.umd.lib.camel.processors.DescriptionURI"/>
 
   <camelContext xmlns="http://camel.apache.org/schema/spring" id="Triplestore" streamCache="true">

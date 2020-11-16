@@ -148,6 +148,10 @@
       </bean>
     </property>
   </bean>
+  <!-- externally-facing repository URL -->
+  <bean id="repoExternalURL" class="java.net.URL">
+    <constructor-arg value="${REPO_EXTERNAL_URL}"/>
+  </bean>
   <import resource="camel/routes.xml"/>
   <import resource="camel/indexing.xml"/>
   <import resource="camel/audit.xml"/>

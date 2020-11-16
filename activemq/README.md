@@ -5,7 +5,7 @@ with [ActiveMQ 5.16.0](http://activemq.apache.org/activemq-5160-release).
 
 [Dockerfile](Dockerfile)
 
-Create a persistant data volume, if needed:
+Create a persistent data volume, if needed:
 
 ```bash
 docker volume create fcrepo-activemq-data
