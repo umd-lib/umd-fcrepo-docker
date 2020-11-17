@@ -166,10 +166,8 @@ issue_title_facet = .[rdf:type is bibo:Issue]/dcterms:title | pcdm:memberOf[rdf:
         <constant>application/json</constant>
       </setHeader>
       <multicast parallelProcessing="true">
-        <to uri="activemq:queue:index.solr.json"/>
         <to uri="http4:solr"/>
       </multicast>
-
     </route>
 
     <route id="edu.umd.lib.camel.routes.DeleteFromSolr">
@@ -189,24 +187,7 @@ issue_title_facet = .[rdf:type is bibo:Issue]/dcterms:title | pcdm:memberOf[rdf:
       </setBody>
       <log loggingLevel="INFO" message="Deleting Solr index record for ${header.CamelFcrepoUri}"/>
       <to uri="http4:solr"/>
-      <!-- setHeader headerName="SolrOperation">
-        <constant>DELETE_BY_ID</constant>
-      </setHeader>
-      <setBody>
-        <simple>${header.CamelFcrepoUri}</simple>
-      </setBody>
-      <removeHeaders pattern="CamelFcrepo*"/>
-      <to uri="solr:localhost:8983/solr/fedora4"/>
-      <to uri="direct:solr.commit"/ -->
     </route>
-
-    <!-- route id="commitSolrChanges">
-      <from uri="direct:solr.commit"/>
-      <setHeader headerName="SolrOperation">
-        <constant>COMMIT</constant>
-      </setHeader>
-      <to uri="solr:${bean:indexSolrUpdateURI.authority}/solr/fedora4"/>
-      </route-->
 
   </camelContext>
 
