@@ -25,6 +25,7 @@ services:
       - AUDIT_TRIPLESTORE_UPDATE_URI=http://fuseki:3030/fcrepo-audit/update
       - BATCH_USER=plastron
       - FIXITY_LOG_DIR=/tmp
+      - INDEX_SOLR_UPDATE_URI=http://solr-fedora4:8983/solr/fedora4/update
       - INDEX_TRIPLESTORE_UPDATE_URI=http://fuseki:3030/fedora4/update
       - JWT_SECRET
       - REPO_EXTERNAL_URL=http://localhost:8080/rest

@@ -3,6 +3,10 @@
   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
   http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
 
+  <bean id="indexSolrUpdateURI" class="java.net.URL">
+    <constructor-arg value="${INDEX_SOLR_UPDATE_URI}"/>
+  </bean>
+
   <!-- bean id="deadLetterProcessor" class="edu.umd.lib.camel.processors.DeadLetterProcessor"/>
 
   <bean id="deadLetterErrorHandler" class="org.apache.camel.builder.DeadLetterChannelBuilder">
@@ -127,8 +131,8 @@ issue_title_facet = .[rdf:type is bibo:Issue]/dcterms:title | pcdm:memberOf[rdf:
             ${header.CamelFcrepoEventType} contains "http://fedora.info/definitions/v4/event#ResourceDeletion"
             || ${header.CamelFcrepoEventType} contains "https://www.w3.org/ns/activitystreams#Delete"
           </simple>
+          <to uri="direct:solr.delete"/>
           <stop/>
-          <!-- to uri="direct:solr.delete"/ -->
         </when>
         <otherwise>
           <to uri="direct:solr.index"/>
@@ -143,65 +147,47 @@ issue_title_facet = .[rdf:type is bibo:Issue]/dcterms:title | pcdm:memberOf[rdf:
 
     <route id="edu.umd.lib.camel.routes.InsertIntoSolr">
       <from uri="direct:solr.index"/>
-      <setHeader headerName="CamelFcrepoUri">
-        <simple>http://docker.for.mac.host.internal:8080/rest${header.CamelFcrepoPath}</simple>
+      <setHeader headerName="CamelHttpUri">
+        <simple>${sysenv.REPO_INTERNAL_URL}${header.CamelFcrepoPath}</simple>
       </setHeader>
       <log loggingLevel="DEBUG" message="Indexing ${header.CamelFcrepoUri} to Solr"/>
       <process ref="indexingLDPathProcessor"/>
       <log loggingLevel="DEBUG" message="Finished LDPath processing of ${header.CamelFcrepoUri}"/>
-      <to uri="activemq:queue:index.ldpath.result"/>
 
-        <!-- do the LDPath transformation over HTTP -->
-      <!--
-      <setHeader headerName="CamelHttpUri">
-        <constant>http://localhost:9086/ldpath</constant>
-      </setHeader>
-      <setHeader headerName="CamelHttpMethod">
-        <constant>GET</constant>
-      </setHeader>
-      <setHeader headerName="CamelHttpQuery">
-        <simple>context=${headers.CamelFcrepoUri}&amp;ldpath=https://fcrepolocal/ldpath/index-transformation.ldpath</simple>
-      </setHeader>
-      <removeHeaders pattern="CamelFcrepo*"/>
-        <to uri="http4:ldpath"/>
-      -->
-
-          <!-- update Solr index using the result of the LDPath transformation -->
-        <!--
+      <!-- update Solr index using the result of the LDPath transformation -->
       <removeHeaders pattern="CamelHttp*"/>
       <setHeader headerName="CamelHttpUri">
-        <simple>http://localhost:8983/solr/fedora4/update</simple>
+        <simple>${sysenv.INDEX_SOLR_UPDATE_URI}/json/docs?commitWithin=1000</simple>
       </setHeader>
       <setHeader headerName="CamelHttpMethod">
         <constant>POST</constant>
       </setHeader>
-      <to uri="http4:solr"/>
-          <to uri="direct:solr.commit"/>
-        -->
+      <setHeader headerName="Content-Type">
+        <constant>application/json</constant>
+      </setHeader>
+      <multicast parallelProcessing="true">
+        <to uri="http4:solr"/>
+      </multicast>
     </route>
 
-    <!--
-    <route id="deleteFromSolr">
+    <route id="edu.umd.lib.camel.routes.DeleteFromSolr">
       <from uri="direct:solr.delete"/>
-      <setHeader headerName="SolrOperation">
-        <constant>DELETE_BY_ID</constant>
+      <removeHeaders pattern="CamelHttp*"/>
+      <setHeader headerName="CamelHttpUri">
+        <simple>${sysenv.INDEX_SOLR_UPDATE_URI}?commitWithin=1000</simple>
+      </setHeader>
+      <setHeader headerName="CamelHttpMethod">
+        <constant>POST</constant>
+      </setHeader>
+      <setHeader headerName="Content-Type">
+        <constant>application/json</constant>
       </setHeader>
       <setBody>
-        <simple>${header.CamelFcrepoUri}</simple>
+        <simple>{"delete":{"id":"${header.CamelFcrepoUri}"}}</simple>
       </setBody>
-      <removeHeaders pattern="CamelFcrepo*"/>
-      <to uri="solr:localhost:8983/solr/fedora4"/>
-      <to uri="direct:solr.commit"/>
+      <log loggingLevel="INFO" message="Deleting Solr index record for ${header.CamelFcrepoUri}"/>
+      <to uri="http4:solr"/>
     </route>
-    
-    <route id="commitSolrChanges">
-      <from uri="direct:solr.commit"/>
-      <setHeader headerName="SolrOperation">
-        <constant>COMMIT</constant>
-      </setHeader>
-      <to uri="solr:localhost:8983/solr/fedora4"/>
-      </route>
-    -->
 
   </camelContext>
 
