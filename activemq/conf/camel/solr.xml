@@ -124,7 +124,7 @@ issue_title_facet = .[rdf:type is bibo:Issue]/dcterms:title | pcdm:memberOf[rdf:
 
   <camelContext xmlns="http://camel.apache.org/schema/spring" id="SolrIndex" streamCache="true"><!-- errorHandlerRef="deadLetterErrorHandler" -->
     <route id="edu.umd.lib.camel.routes.SolrIndexing">
-      <from uri="activemq:queue:fedorasolr"/>
+      <from uri="activemq:queue:index.solr"/>
       <choice>
         <when>
           <simple>
@@ -138,11 +138,6 @@ issue_title_facet = .[rdf:type is bibo:Issue]/dcterms:title | pcdm:memberOf[rdf:
           <to uri="direct:solr.index"/>
         </otherwise>
       </choice>
-    </route>
-
-    <route id="edu.umd.lib.camel.routes.SolrReindexing">
-      <from uri="activemq:queue:solr.reindex"/>
-      <to uri="direct:solr.index"/>
     </route>
 
     <route id="edu.umd.lib.camel.routes.InsertIntoSolr">

@@ -13,9 +13,16 @@
 
   <camelContext xmlns="http://camel.apache.org/schema/spring" id="Auditing" streamCache="true">
 
-    <!-- input message format: fcrepo event -->
+    <!--
+    Expected headers:
+    * CamelFcrepoUri
+    * CamelFcrepoEventId
+    * CamelFcrepoEventName
+    Expected environment variables:
+    * AUDIT_EVENT_BASE_URI
+    -->
     <route id="edu.umd.lib.camel.routes.Audit">
-      <from uri="activemq:queue:fedoraaudit"/>
+      <from uri="activemq:queue:audit"/>
       <log loggingLevel="DEBUG" message="Receiving audit event for ${header.CamelFcrepoUri}"/>
       <setHeader headerName="CamelAuditEventUri">
         <simple>${sysenv.AUDIT_EVENT_BASE_URI}${header.CamelFcrepoEventId}</simple>
@@ -61,10 +68,18 @@
       <log loggingLevel="DEBUG" message="Event type for PREMIS: ${header.CamelAuditEventType}"/>
       <multicast parallelProcessing="true">
         <to uri="direct:generatePremis"/>
-        <to uri="activemq:queue:audit.data"/>
+        <to uri="activemq:queue:audit.database"/>
       </multicast>
     </route>
 
+    <!--
+    Expected headers:
+    * CamelAuditEventUri
+    * CamelFcrepoDateTime
+    * CamelFcrepoUser
+    * CamelFcrepoUserAgent
+    * CamelAuditEventType
+    -->
     <route id="edu.umd.lib.camel.routes.GeneratePremis">
       <from uri="direct:generatePremis"/>
       <setBody>
@@ -80,11 +95,23 @@
 <${header.CamelAuditEventUri}> <http://www.loc.gov/premis/rdf/v1#hasEventType> <${header.CamelAuditEventType}> .
         ]]></simple>
       </setBody>
-      <to uri="activemq:queue:triplestore.audit.data"/>
+      <to uri="activemq:queue:audit.triplestore"/>
     </route>
 
+    <!--
+    Expected headers:
+    * CamelAuditEventUri
+    * CamelAuditEventType
+    * CamelFcrepoUser
+    * CamelFcrepoUri
+    * CamelFcrepoDateTime
+    Expected body format:
+    * (None)
+    Expected beans:
+    * auditDatabase : javax.sql.DataSource
+    -->
     <route id="edu.umd.lib.camel.routes.AuditDatabase">
-      <from uri="activemq:queue:audit.data"/>
+      <from uri="activemq:queue:audit.database"/>
       <setBody>
         <constant><![CDATA[
           INSERT INTO history (event_uri, event_type, username, resource_uri, timestamp)
@@ -94,9 +121,16 @@
       <to uri="jdbc:auditDatabase?useHeadersAsParameters=true"/>
     </route>
 
-    <!-- expects an application/n-triples formatted body -->
+    <!--
+    Expected headers:
+    * (None)
+    Expected body format:
+    * application/n-triples
+    Expected environment variables:
+    * AUDIT_TRIPLESTORE_UPDATE_URI
+    -->
     <route id="edu.umd.lib.camel.routes.AuditTriplestore">
-      <from uri="activemq:queue:triplestore.audit.data"/>
+      <from uri="activemq:queue:audit.triplestore"/>
       <removeHeaders pattern="*"/>
       <setHeader headerName="Content-Type">
         <constant>application/sparql-update</constant>

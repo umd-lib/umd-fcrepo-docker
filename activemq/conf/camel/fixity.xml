@@ -63,8 +63,20 @@
   <!-- must enable stream caching since multiple downstream endpoints need to each read the message body in parallel -->
   <camelContext xmlns="http://camel.apache.org/schema/spring" id="FixityChecking" streamCache="true">
 
+    <!--
+    Expects headers:
+    * CamelFcrepoPath
+    * CamelFcrepoUri
+
+    Expects environment variables:
+    * REPO_INTERNAL_URL
+
+    Expects beans:
+    * addBearerAuthorization : edu.umd.lib.camel.processors.AddBearerAuthorizationProcessor
+    * repoExternalURL : java.net.URL
+    -->
     <route id="edu.umd.lib.camel.routes.FixityChecker">
-      <from uri="activemq:queue:fedorafixity"/>
+      <from uri="activemq:queue:fixity"/>
       <setHeader headerName="CamelHttpUri">
         <simple>${sysenv.REPO_INTERNAL_URL}${header.CamelFcrepoPath}</simple>
       </setHeader>
@@ -131,6 +143,22 @@
       </multicast>
     </route>
 
+    <!--
+    Expects headers:
+    * (None)
+
+    Expects body format:
+    * application/rdf+xml
+
+    Expects environment variables:
+    * AUDIT_EVENT_BASE_URI
+
+    Expects beans:
+    * fixityAuditSparqlProcessor : edu.umd.lib.camel.processors.SparqlQueryProcessor
+
+    Produces body format:
+    * application/n-triples
+    -->
     <route id="edu.umd.lib.camel.routes.FixityAudit">
       <from uri="direct:fixity.audit"/>
       <setHeader headerName="CamelAuditEventId">
@@ -145,9 +173,22 @@
       <log loggingLevel="INFO" message="Fixity check event URI: ${header.CamelAuditEventUri}"/>
       <process ref="fixityAuditSparqlProcessor"/>
       <!-- produces an N-Triples formatted RDF document using the PREMIS vocabulary to describe the fixity check -->
-      <to uri="activemq:queue:triplestore.audit.data"/>
+      <to uri="activemq:queue:audit.triplestore"/>
     </route>
 
+    <!--
+    Expects headers:
+    * (None)
+
+    Expects body format:
+    * application/rdf+xml
+
+    Expects beans:
+    * fixityLogSparqlProcessor : edu.umd.lib.camel.processors.SparqlQueryProcessor
+
+    Produces body format:
+    * text/csv
+    -->
     <route id="edu.umd.lib.camel.routes.FixityLog">
       <from uri="direct:fixity.log"/>
       <process ref="fixityLogSparqlProcessor"/>
@@ -160,6 +201,16 @@
       <to uri="file:///var/log/fixity?fileExist=Append"/>
     </route>
 
+    <!--
+    Expects headers:
+    * CamelFcrepoUri
+
+    Expects environment variables:
+    * SMTP_SERVER
+
+    Expects beans:
+    * repoExternalURL : java.net.URL
+    -->
     <route id="edu.umd.lib.camel.routes.FixityNotify">
       <from uri="direct:fixity.notify"/>
       <removeHeaders pattern="*" excludePattern="CamelFcrepoUri"/>
@@ -175,6 +226,8 @@
       <setHeader headerName="Content-Type">
         <constant>text/plain</constant>
       </setHeader>
+      <!-- use a routing slip instead of a simple <to> element
+           for runtime configuration of the SMTP server address -->
       <routingSlip>
         <simple>smtp://${sysenv.SMTP_SERVER}</simple>
       </routingSlip>
