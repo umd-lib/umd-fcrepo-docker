@@ -1,9 +1,36 @@
 version: "3.7"
 services:
-  postgres:
-    image: docker.lib.umd.edu/fcrepo-postgres
+  archelon-db:
+    image: postgres:13.0-alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    configs:
+      - source: init-archelon-db.sh
+        target: /docker-entrypoint-initdb.d/init-archelon-db.sh
     volumes:
-      - postgres-data:/var/lib/postgresql/data
+      - archelon-db-data:/var/lib/postgresql/data
+    ports:
+      - 5434:5432
+  audit-db:
+    image: postgres:13.0-alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    configs:
+      - source: init-audit-db.sh
+        target: /docker-entrypoint-initdb.d/init-audit-db.sh
+    volumes:
+      - audit-db-data:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
+  modeshape-db:
+    image: postgres:13.0-alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    configs:
+      - source: init-modeshape-db.sh
+        target: /docker-entrypoint-initdb.d/init-modeshape-db.sh
+    volumes:
+      - modeshape-db-data:/var/lib/postgresql/data
     ports:
       - 5432:5432
   activemq:
@@ -16,8 +43,8 @@ services:
       - 61613:61613
       - 8161:8161
     environment:
-      - AUDIT_DB_HOST=postgres
-      - AUDIT_DB_PORT=5432
+      - AUDIT_DB_HOST=audit-db
+      - AUDIT_DB_PORT=5433
       - AUDIT_DB_NAME=fcrepo_audit
       - AUDIT_DB_USERNAME=camel
       - AUDIT_DB_PASSWORD=camel
@@ -66,7 +93,7 @@ services:
       - LDAP_ADMIN_GROUP=cn=Application_Roles:Libraries:FCREPO:FCREPO-Administrator,ou=grouper,ou=group,dc=umd,dc=edu
       - LDAP_USER_GROUP=cn=Application_Roles:Libraries:FCREPO:FCREPO-User,ou=grouper,ou=group,dc=umd,dc=edu
       - MODESHAPE_DB_DRIVER=org.postgresql.Driver
-      - MODESHAPE_DB_URL=jdbc:postgresql://postgres:5432/fcrepo_modeshape5
+      - MODESHAPE_DB_URL=jdbc:postgresql://modeshape-db:5432/fcrepo_modeshape5
       - MODESHAPE_DB_USERNAME=fcrepo
       - MODESHAPE_DB_PASSWORD
   mail:
@@ -76,10 +103,18 @@ services:
       - 8025:8025
 
 configs:
+  init-archelon-db.sh:
+    file: ./postgres-archelon/init-archelon-db.sh
+  init-audit-db.sh:
+    file: ./postgres-audit/init-audit-db.sh
+  init-modeshape-db.sh:
+    file: ./postgres-modeshape/init-modeshape-db.sh
   ip-mapping.properties:
     file: ./repository/ip-mapping.properties
 volumes:
-  postgres-data:
+  archelon-db-data:
+  audit-db-data:
+  modeshape-db-data:
   activemq-data:
   fixity-log-data:
   solr-fedora4-data:
