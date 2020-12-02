@@ -16,7 +16,6 @@ cd umd-fcrepo-docker
 Build images:
 
 ```bash
-docker build -t docker.lib.umd.edu/fcrepo-postgres postgres
 docker build -t docker.lib.umd.edu/fcrepo-activemq activemq
 docker build -t docker.lib.umd.edu/fcrepo-solr-fedora4 solr-fedora4
 docker build -t docker.lib.umd.edu/fcrepo-fuseki fuseki
@@ -82,12 +81,43 @@ docker service logs -f umd-fcrepo_mail
 * Fedora repository REST API: <http://localhost:8080/rest/>
 * Fedora repository login/user profile page: <http://localhost:8080/user/>
 
+### Database Ports
+
+This stack starts 3 PostgreSQL containers, each containing a single database:
+
+| Container Name | Port | Database Name     |
+|----------------|------|-------------------|
+| modeshape-db   | 5432 | fcrepo_modeshape5 |
+| audit-db       | 5433 | fcrepo_audit      |
+| archelon-db    | 5434 | archelon          |
+
+These can be accessed from the host using the psql command-line tool:
+
+```bash
+# Modeshape database backing the repository
+psql -U fcrepo -h localhost -p 5432 fcrepo_modeshape5
+
+# audit database
+# archelon user has read-only access to the history table
+psql -U archelon -h localhost -p 5433 fcrepo_audit
+# camel user has read/write access to the history table
+psql -U camel -h localhost -p 5433 fcrepo_audit
+
+# Archelon database backing the Archelon Rails app
+psql -U archelon -h localhost -p 5434 archelon
+```
+
+Database initialization scripts:
+
+* [modeshape-db](postgres-modeshape/init-modeshape-db.sh)
+* [audit-db](postgres-audit/init-audit-db.sh)
+* [archelon-db](postgres-archelon/init-archelon-db.sh)
+
 ## Individual Images
 
 Each of the images may also be built and run individually. See the README
 files for each image for more information:
 
-* [PostgreSQL](postgres/README.md)
 * [ActiveMQ](activemq/README.md)
 * [Solr (fedora4 Core)](solr-fedora4/README.md)
 * [Fuseki](fuseki/README.md)
