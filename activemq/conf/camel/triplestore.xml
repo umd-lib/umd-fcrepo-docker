@@ -13,7 +13,7 @@
     * (None)
     -->
     <route id="edu.umd.lib.camel.routes.TriplestoreIndexing">
-      <from uri="activemq:queue:fedoratriplestore"/>
+      <from uri="activemq:queue:index.triplestore"/>
       <choice>
         <when>
           <simple>${header.CamelFcrepoEventName} starts with "create"</simple>

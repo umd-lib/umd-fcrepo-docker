@@ -17,8 +17,8 @@
         <otherwise>
           <log loggingLevel="DEBUG" message="Sending to all indexing destinations"/>
           <multicast parallelProcessing="true">
-            <to uri="activemq:queue:fedoratriplestore"/>
-            <to uri="activemq:queue:fedorasolr"/>
+            <to uri="activemq:queue:index.triplestore"/>
+            <to uri="activemq:queue:index.solr"/>
           </multicast>
         </otherwise>
       </choice>
