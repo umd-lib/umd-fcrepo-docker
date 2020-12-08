@@ -5,6 +5,7 @@ Docker images for the Fedora (fcrepo) applications.
 ## External Requirements
 
 * [umd-fcrepo-webapp] Docker image
+* [plastrond] Docker image
 
 ## Quick Start
 
@@ -23,7 +24,7 @@ docker build -t docker.lib.umd.edu/fcrepo-fixity fixity
 docker build -t docker.lib.umd.edu/fcrepo-mail mail
 ```
 
-Export environment variables (for the repository container):
+Export environment variables:
 
 ```bash
 export MODESHAPE_DB_PASSWORD=...  # default in the umd-fcrepo-docker stack is "fcrepo"
@@ -38,6 +39,15 @@ Deploy the stack:
 ```bash
 docker stack deploy --with-registry-auth -c umd-fcrepo.yml umd-fcrepo
 ```
+
+For ease of deploying, you can create a `.env` file that exports the required
+environment variables and, source that file when deploying:
+
+```bash
+source .env && docker stack deploy --with-registry-auth -c umd-fcrepo.yml umd-fcrepo
+```
+
+Any `.env` file will be ignored by Git.
 
 ### Fixity checking
 
@@ -124,4 +134,5 @@ files for each image for more information:
 * [Mail](mail/README.md)
 
 [umd-fcrepo-webapp]: https://github.com/umd-lib/umd-fcrepo-webapp
+[plastrond]: https://github.com/umd-lib/plastron
 [aiosmtpd]: https://aiosmtpd.readthedocs.io/en/latest/README.html
