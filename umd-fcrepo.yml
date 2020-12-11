@@ -73,6 +73,8 @@ services:
   repository:
     image: docker.lib.umd.edu/fcrepo-webapp
     configs:
+      - source: basic-auth.properties
+        target: /etc/fcrepo/basic-auth.properties
       - source: ip-mapping.properties
         target: /etc/fcrepo/ip-mapping.properties
     volumes:
@@ -82,6 +84,7 @@ services:
     environment:
       - ACTIVEMQ_URL=tcp://activemq:61616
       - CAS_URL_PREFIX=https://shib.idm.umd.edu/shibboleth-idp/profile/cas
+      - CREDENTIALS_FILE=/etc/fcrepo/basic-auth.properties
       - FCREPO_BASE_URL=http://localhost:8080/
       - IP_MAPPING_FILE=/etc/fcrepo/ip-mapping.properties
       - JWT_SECRET
@@ -112,6 +115,8 @@ services:
       - 8025:8025
 
 configs:
+  basic-auth.properties:
+    file: ./repository/basic-auth.properties
   init-archelon-db.sh:
     file: ./postgres-archelon/init-archelon-db.sh
   init-audit-db.sh:
