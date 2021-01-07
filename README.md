@@ -2,14 +2,30 @@
 
 Docker images for the Fedora (fcrepo) applications.
 
-## External Requirements
+## Prerequisites
 
-* [umd-fcrepo-webapp] Docker image
-* [plastrond] Docker image
+These Docker images are defined in other repositories, and must be built
+separately before deploying the umd-fcrepo-docker stack.
+
+* [umd-fcrepo-webapp] Docker image:
+  ```bash
+  cd ~/git
+  git clone git@github.com:umd-lib/umd-fcrepo-webapp.git
+  cd umd-fcrepo-webapp
+  docker build -t docker.lib.umd.edu/fcrepo-webapp .
+  ```
+* [plastrond] Docker image:
+  ```bash
+  cd ~/git
+  git clone git@github.com:umd-lib/plastron.git
+  cd plastron
+  docker build -t docker.lib.umd.edu/plastrond .
+  ```
 
 ## Quick Start
 
 ```bash
+cd ~/git
 git clone git@github.com:umd-lib/umd-fcrepo-docker.git
 cd umd-fcrepo-docker
 ```
