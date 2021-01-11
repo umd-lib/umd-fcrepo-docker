@@ -9,9 +9,9 @@ MESSAGE_BROKER:
   MESSAGE_STORE_DIR: /var/opt/plastron/msg
   DESTINATIONS:
     JOBS: /queue/plastron.jobs
-    JOB_STATUS: /topic/plastron.jobs.status
-    COMPLETED_JOBS: /queue/plastron.jobs.completed
     SYNCHRONOUS_JOBS: /queue/plastron.jobs.synchronous
+    JOB_PROGRESS: /topic/plastron.jobs.progress
+    JOB_STATUS: /queue/plastron.jobs.status
 COMMANDS:
   EXPORT:
     SSH_PRIVATE_KEY:
