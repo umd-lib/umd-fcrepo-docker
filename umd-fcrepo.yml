@@ -99,15 +99,6 @@ services:
       - MODESHAPE_DB_URL=jdbc:postgresql://modeshape-db:5432/fcrepo_modeshape5
       - MODESHAPE_DB_USERNAME=fcrepo
       - MODESHAPE_DB_PASSWORD
-  plastrond:
-    image: docker.lib.umd.edu/plastrond
-    configs:
-      - source: plastrond.yml
-        target: /etc/plastrond.yml
-    volumes:
-      - plastrond-data:/var/opt/plastron/msg
-    environment:
-      - JWT_SECRET
   mail:
     # debugging mail server for local development
     image: docker.lib.umd.edu/fcrepo-mail
@@ -125,8 +116,6 @@ configs:
     file: ./postgres-modeshape/init-modeshape-db.sh
   ip-mapping.properties:
     file: ./repository/ip-mapping.properties
-  plastrond.yml:
-    file: ./plastrond/plastrond.yml
 volumes:
   archelon-db-data:
   audit-db-data:
@@ -136,4 +125,3 @@ volumes:
   solr-fedora4-data:
   fuseki-data:
   repository-data:
-  plastrond-data:
