@@ -39,6 +39,7 @@
 @prefix fabio: <http://purl.org/spar/fabio/>
 @prefix rel: <http://id.loc.gov/vocabulary/relators/>
 @prefix edm: <http://www.europeana.eu/schemas/edm/>
+@prefix ldp: <http://www.w3.org/ns/ldp#>
 
 id = . :: xsd:string ;
 rdf_type = rdf:type :: xsd:string;
@@ -113,7 +114,7 @@ annotation_target = oa:hasTarget :: xsd:string;
 annotation_source = oa:hasTarget/oa:hasSource :: xsd:string;
 annotation_body = oa:hasBody :: xsd:string;
 annotation_selector = oa:hasTarget/oa:hasSelector :: xsd:string;
-extracted_text = oa:hasBody[rdf:type is oa:TextualBody]/rdf:value :: xsd:string;
+extracted_text = oa:hasBody[rdf:type is oa:TextualBody]/rdf:value | pcdm:hasMember[rdf:type is fabio:Page]/ldp:contains/ldp:contains[rdf:type is oa:Annotation]/oa:hasBody[rdf:type is oa:TextualBody]/rdf:value :: xsd:string;
 annotation_motivation = oa:motivatedBy :: xsd:string;
 resource_selector = oa:hasTarget/oa:hasSelector[rdf:type is oa:FragmentSelector]/rdf:value :: xsd:string;
 
@@ -123,8 +124,31 @@ issue_title_facet = .[rdf:type is bibo:Issue]/dcterms:title | pcdm:memberOf[rdf:
   </bean>
 
   <camelContext xmlns="http://camel.apache.org/schema/spring" id="SolrIndex" streamCache="true"><!-- errorHandlerRef="deadLetterErrorHandler" -->
-    <route id="edu.umd.lib.camel.routes.SolrIndexing">
+    <route id="edu.umd.lib.camel.routes.SolrIndexFilter">
       <from uri="activemq:queue:index.solr"/>
+      <!-- skip non-PCDM, non-OA, non-ORE resources -->
+      <choice>
+        <when>
+          <simple>
+            "http://pcdm.org/models#Object" in ${header.CamelFcrepoResourceType}
+            || "http://pcdm.org/models#File" in ${header.CamelFcrepoResourceType}
+            || "http://pcdm.org/models#Collection" in ${header.CamelFcrepoResourceType}
+            || "http://pcdm.org/models#Collection" in ${header.CamelFcrepoResourceType}
+            || "http://www.w3.org/ns/oa#Annotation" in ${header.CamelFcrepoResourceType}
+            || "http://www.openarchives.org/ore/terms/Proxy" in ${header.CamelFcrepoResourceType}
+          </simple>
+          <log loggingLevel="DEBUG" message="${header.CamelFcrepoUri} has a recognized RDF type for Solr indexing"/>
+          <to uri="direct:index.solr"/>
+        </when>
+        <otherwise>
+          <log loggingLevel="DEBUG" message="Skipping Solr indexing of ${header.CamelFcrepoUri} because it is not a recognized RDF type"/>
+          <stop/>
+        </otherwise>
+      </choice>
+    </route>
+
+    <route id="edu.umd.lib.camel.routes.SolrIndex">
+      <from uri="direct:index.solr"/>
       <choice>
         <when>
           <simple>
@@ -135,13 +159,13 @@ issue_title_facet = .[rdf:type is bibo:Issue]/dcterms:title | pcdm:memberOf[rdf:
           <stop/>
         </when>
         <otherwise>
-          <to uri="direct:solr.index"/>
+          <to uri="direct:solr.insert"/>
         </otherwise>
       </choice>
     </route>
 
     <route id="edu.umd.lib.camel.routes.InsertIntoSolr">
-      <from uri="direct:solr.index"/>
+      <from uri="direct:solr.insert"/>
       <setHeader headerName="CamelHttpUri">
         <simple>${sysenv.REPO_INTERNAL_URL}${header.CamelFcrepoPath}</simple>
       </setHeader>

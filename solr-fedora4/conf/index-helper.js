@@ -61,6 +61,7 @@ var MEMBER_OF_PCDM_OBJECT_FIELD = "member_of_pcdm_object";
 var RELATED_OBJECT_OF_FIELD = "pcdm_related_object_of";
 var PCDM_FILES_FIELD = "pcdm_files";
 var ANNOTATION_SOURCE_FIELD = "annotation_source";
+var ANNOTATION_TARGET_FIELD = "annotation_target";
 var GENRE_FIELD = "genre";
 
 // SOLR FIELDS
@@ -304,6 +305,12 @@ function setExtractedTextSource(doc) {
   var sources = getValueArray(doc, ANNOTATION_SOURCE_FIELD);
   if (sources.length > 0) {
     extracted_text_source = sources[0];
+  } else {
+    // try the annotation target field
+    var targets = getValueArray(doc, ANNOTATION_TARGET_FIELD);
+    if (targets.length > 0) {
+      extracted_text_source = targets[0];
+    }
   }
   doc.setField(SOLR_EXTRACTED_TEXT_SOURCE, extracted_text_source);
 }
