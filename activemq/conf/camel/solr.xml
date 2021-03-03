@@ -119,6 +119,8 @@ annotation_motivation = oa:motivatedBy :: xsd:string;
 resource_selector = oa:hasTarget/oa:hasSelector[rdf:type is oa:FragmentSelector]/rdf:value :: xsd:string;
 
 issue_title_facet = .[rdf:type is bibo:Issue]/dcterms:title | pcdm:memberOf[rdf:type is bibo:Issue]/dcterms:title :: xsd:string;
+
+component = fn:first(edm:hasType/rdfs:label, edm:hasType) :: xsd:string;
       ]]></value>
     </property>
   </bean>
