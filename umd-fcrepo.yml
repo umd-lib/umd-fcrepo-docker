@@ -55,7 +55,7 @@ services:
       - INDEX_SOLR_UPDATE_URI=http://solr-fedora4:8983/solr/fedora4/update
       - INDEX_TRIPLESTORE_UPDATE_URI=http://fuseki:3030/fedora4/update
       - JWT_SECRET
-      - REPO_EXTERNAL_URL=http://localhost:8080/rest
+      - REPO_EXTERNAL_URL=http://fcrepo-local:8080/rest
       - REPO_INTERNAL_URL=http://repository:8080/rest
       - SMTP_SERVER=mail:8025
   solr-fedora4:
@@ -85,7 +85,7 @@ services:
       - ACTIVEMQ_URL=tcp://activemq:61616
       - CAS_URL_PREFIX=https://shib.idm.umd.edu/shibboleth-idp/profile/cas
       - CREDENTIALS_FILE=/etc/fcrepo/basic-auth.properties
-      - FCREPO_BASE_URL=http://localhost:8080/
+      - FCREPO_BASE_URL=http://fcrepo-local:8080/
       - IP_MAPPING_FILE=/etc/fcrepo/ip-mapping.properties
       - JWT_SECRET
       - LDAP_URL=ldap://directory.umd.edu
@@ -99,6 +99,10 @@ services:
       - MODESHAPE_DB_URL=jdbc:postgresql://modeshape-db:5432/fcrepo_modeshape5
       - MODESHAPE_DB_USERNAME=fcrepo
       - MODESHAPE_DB_PASSWORD
+    networks:
+      default:
+        aliases:
+          - fcrepo-local
   mail:
     # debugging mail server for local development
     image: docker.lib.umd.edu/fcrepo-mail
