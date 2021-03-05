@@ -193,12 +193,16 @@ function setIsPCDM(doc, pcdm_type) {
 
 // Set Component Type based on rdf_type
 function setObjectComponent(doc, pcdm_type) {
-  if (hasValue(doc, SOLR_COMPONENT)) {
+  var rdf_types = getValueArray(doc, RDF_FIELD);
+  // even if the resource has a component already, if
+  // it is a bibo:Letter, use the original TYPE_MAP;
+  // see https://issues.umd.edu/browse/LIBFCREPO-994
+  // and https://issues.umd.edu/browse/LIBHYDRA-421
+  if (hasValue(doc, SOLR_COMPONENT) && rdf_types.indexOf('bibo:Letter') == -1) {
     logger.debug(SOLR_COMPONENT + ' field already set to "' + doc.getFieldValue(SOLR_COMPONENT) + '"; skipping rdf:typescan');
     return;
   }
   var component = "";
-  var rdf_types = getValueArray(doc, RDF_FIELD);
   for (var i = 0; i < rdf_types.length; i++) {
     var rdf_type = rdf_types[i];
     if (rdf_type in TYPE_MAP) {
