@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>edu.umd.lib</groupId>
+  <artifactId>umd-fcrepo_activemq</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <description>
+    This POM file is used to pull in the Java dependencies for the Camel routes
+    defined in the conf/camel/*.xml files.
+  </description>
+
+  <repositories>
+    <repository>
+      <id>nexus</id>
+      <name>Releases</name>
+      <url>https://maven.lib.umd.edu/nexus/content/repositories/releases</url>
+      <releases>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+        <checksumPolicy>fail</checksumPolicy>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+    <repository>
+      <id>nexus-snapshots</id>
+      <name>Snapshots</name>
+      <url>https://maven.lib.umd.edu/nexus/content/repositories/snapshots</url>
+      <releases>
+        <enabled>false</enabled>
+      </releases>
+      <snapshots>
+        <enabled>true</enabled>
+        <updatePolicy>always</updatePolicy>
+        <checksumPolicy>fail</checksumPolicy>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <properties>
+    <camel.version>2.25.2</camel.version>
+    <fcrepo-camel.version>4.5.0</fcrepo-camel.version>
+    <postgresql.version>42.2.16</postgresql.version>
+    <umd-camel-processors.version>1.0.0-SNAPSHOT</umd-camel-processors.version>
+  </properties>
+
+  <dependencies>
+    <!-- PostgreSQL -->
+    <dependency>
+      <groupId>org.postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>${postgresql.version}</version>
+    </dependency>
+
+    <!-- Apache Camel components -->
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-jms</artifactId>
+      <version>${camel.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-http4</artifactId>
+      <version>${camel.version}</version>
+      <!--
+        An implementation of the servlet-api (tomcat-servlet-api) is
+        provided by the ActiveMQ distribution, so excluding the
+        javax.servlet-api to remove warnings about duplicate classes when
+        running ActiveMQ
+      -->
+      <exclusions>
+        <exclusion>
+          <groupId>javax.servlet</groupId>
+          <artifactId>javax.servlet-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-groovy</artifactId>
+      <version>${camel.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-jdbc</artifactId>
+      <version>${camel.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-solr</artifactId>
+      <version>${camel.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.camel</groupId>
+      <artifactId>camel-mail</artifactId>
+      <version>${camel.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>edu.umd.lib</groupId>
+      <artifactId>umd-camel-processors</artifactId>
+      <version>${umd-camel-processors.version}</version>
+    </dependency>
+
+    <!-- fcrepo Camel library -->
+    <dependency>
+      <groupId>org.fcrepo.camel</groupId>
+      <artifactId>fcrepo-camel</artifactId>
+      <version>${fcrepo-camel.version}</version>
+      <exclusions>
+        <!-- jena-osgi is not needed because we are not using Karaf, and
+             it has jar versions that interfere with umd-camel-processors  -->
+        <exclusion>
+          <groupId>org.apache.jena</groupId>
+          <artifactId>jena-osgi</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
+
+</project>

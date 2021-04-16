@@ -1,0 +1,199 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+  http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+  <bean id="eventProcessor" class="org.fcrepo.camel.processor.EventProcessor"/>
+
+  <camelContext xmlns="http://camel.apache.org/schema/spring" id="UmdFcrepoEventRouter" streamCache="true">
+
+    <!--
+    Expected headers:
+    * org.fcrepo.jms.user
+    * org.fcrepo.jms.userAgent
+    * org.fcrepo.jms.eventType
+    * org.fcrepo.jms.resourceType
+    * org.fcrepo.jms.identifier
+
+    Expected body format:
+    * application/json OR Java Map
+
+    Expected environment variables:
+    * BATCH_USER
+    -->
+    <route id="edu.umd.lib.camel.routes.FedoraEvents">
+      <from uri="activemq:queue:fedora"/>
+      <process ref="eventProcessor"/>
+      <setHeader headerName="CamelFcrepoUser">
+        <header>org.fcrepo.jms.user</header>
+      </setHeader>
+      <setHeader headerName="CamelFcrepoUserAgent">
+        <header>org.fcrepo.jms.userAgent</header>
+      </setHeader>
+      <setHeader headerName="CamelFcrepoEventType">
+        <header>org.fcrepo.jms.eventType</header>
+      </setHeader>
+      <setHeader headerName="CamelFcrepoResourceType">
+        <header>org.fcrepo.jms.resourceType</header>
+      </setHeader>
+      <setHeader headerName="CamelFcrepoPath">
+        <header>org.fcrepo.jms.identifier</header>
+      </setHeader>
+      <log loggingLevel="DEBUG" message="Event user: ${header.CamelFcrepoUser}"/>
+      <log loggingLevel="DEBUG" message="Event user agent: ${header.CamelFcrepoUserAgent}"/>
+      <log loggingLevel="INFO" message="Routing event for resource with URI: ${header.CamelFcrepoUri}"/>
+      <removeHeaders pattern="org.fcrepo.*"/>
+      <choice>
+        <when>
+          <simple>${header.CamelFcrepoPath} == ""</simple>
+          <log loggingLevel="INFO" message="Root path detected. Suppressing ${header.CamelFcrepoEventType}."/>
+          <stop/>
+        </when>
+        <when>
+          <simple>${header.CamelFcrepoPath} in "/pcdm,/annotations"</simple>
+          <log loggingLevel="INFO" message="Skip path detected. Suppressing ${header.CamelFcrepoEventType} for '${header.CamelFcrepoPath}'."/>
+          <stop/>
+        </when>
+        <when>
+          <simple>${header.CamelFcrepoUser} == ${sysenv.BATCH_USER}</simple>
+          <log loggingLevel="INFO" message="Detected batch user (${header.CamelFcrepoUser}) initiated event."/>
+          <to uri="direct:batch"/>
+        </when>
+        <otherwise>
+          <to uri="direct:detectEventType"/>
+        </otherwise>
+      </choice>
+    </route>
+
+    <!--
+    Expected headers:
+    * CamelFcrepoPath
+    -->
+    <route id="edu.umd.lib.camel.routes.BatchEvents">
+      <from uri="direct:batch"/>
+      <filter>
+        <simple>${header.CamelFcrepoPath} contains '#'</simple>
+        <log loggingLevel="DEBUG" message="URI with fragment detected. Suppressing '${header.CamelFcrepoUri}' node event for batch user."/>
+        <stop/>
+      </filter>
+      <setHeader headerName="JMSPriority">
+        <constant>3</constant>
+      </setHeader>
+      <setHeader headerName="UMDBatchEvent">
+        <constant>true</constant>
+      </setHeader>
+      <to uri="direct:detectEventType"/>
+    </route>
+
+    <!--
+    Expected headers:
+    * CamelFcrepoEventType
+    -->
+    <route id="edu.umd.lib.camel.routes.DetectEventType">
+      <from uri="direct:detectEventType"/>
+      <log loggingLevel="DEBUG" message="${routeId}: ${id}"/>
+      <choice>
+        <when>
+          <simple>
+            ${header.CamelFcrepoEventType} contains "http://fedora.info/definitions/v4/event#ResourceCreation"
+            || ${header.CamelFcrepoEventType} contains "https://www.w3.org/ns/activitystreams#Create"
+          </simple>
+          <setHeader headerName="CamelFcrepoEventName">
+            <constant>create</constant>
+          </setHeader>
+        </when>
+        <when>
+          <simple>
+            ${header.CamelFcrepoEventType} contains "http://fedora.info/definitions/v4/event#ResourceDeletion"
+            || ${header.CamelFcrepoEventType} contains "https://www.w3.org/ns/activitystreams#Delete"
+          </simple>
+          <setHeader headerName="CamelFcrepoEventName">
+            <constant>delete</constant>
+          </setHeader>
+        </when>
+        <when>
+          <simple>
+            ${header.CamelFcrepoEventType} contains "http://fedora.info/definitions/v4/event#ResourceModification"
+            || ${header.CamelFcrepoEventType} contains "https://www.w3.org/ns/activitystreams#Update"
+          </simple>
+          <setHeader headerName="CamelFcrepoEventName">
+            <constant>update</constant>
+          </setHeader>
+        </when>
+      </choice>
+      <to uri="direct:detectBinary"/>
+    </route>
+
+    <!--
+    Expected headers:
+    * CamelFcrepoResourceType
+    * CamelFcrepoEventName
+    -->
+    <route id="edu.umd.lib.camel.routes.DetectBinary">
+      <from uri="direct:detectBinary"/>
+      <choice>
+        <when>
+          <simple>${header.CamelFcrepoResourceType} contains "http://fedora.info/definitions/v4/repository#Binary"</simple>
+          <setHeader headerName="CamelFcrepoBinary">
+            <constant>true</constant>
+          </setHeader>
+          <setHeader headerName="CamelFcrepoEventName">
+            <simple>${header.CamelFcrepoEventName} binary</simple>
+          </setHeader>
+        </when>
+        <otherwise>
+          <setHeader headerName="CamelFcrepoEventName">
+            <simple>${header.CamelFcrepoEventName} RDF</simple>
+          </setHeader>
+        </otherwise>
+      </choice>
+      <log loggingLevel="INFO" message="Event with MessageID ${id} is a ${headers.CamelFcrepoEventName} event"/>
+      <to uri="direct:distribution"/>
+    </route>
+
+    <!--
+    Expected headers:
+    * CamelFcrepoUri
+    -->
+    <route id="edu.umd.lib.camel.routes.Distribution">
+      <from uri="direct:distribution"/>
+      <log loggingLevel="DEBUG" message="Distributing event for ${header.CamelFcrepoUri} (MessageID: ${id})"/>
+      <multicast parallelProcessing="true">
+        <filter>
+          <simple>${headers.CamelFcrepoBinary}</simple>
+          <to uri="direct:binary"/>
+        </filter>
+        <to uri="activemq:queue:index"/>
+        <to uri="activemq:queue:audit"/>
+      </multicast>
+    </route>
+
+    <!--
+    Expected headers:
+    * CamelFcrepoEventName
+    * CamelFcrepoUri
+    -->
+    <route id="edu.umd.lib.camel.routes.Binaries">
+      <from uri="direct:binary"/>
+      <multicast parallelProcessing="true">
+        <filter>
+          <!--
+            if the message is about a new binary, remove all headers except for CamelFcrepoUri,
+            clear the body, and send to the fixity candidates queue
+          -->
+          <simple>${header.CamelFcrepoEventName} == "create binary"</simple>
+          <log loggingLevel="INFO" message="New binary detected, sending to fixity candidates queue"/>
+          <!-- clean out unnecessary headers (just leave the fcrepo URI), and clear the body -->
+          <removeHeaders pattern="*" excludePattern="CamelFcrepoUri"/>
+          <setBody>
+            <constant/>
+          </setBody>
+          <to uri="activemq:queue:fixitycandidates"/>
+        </filter>
+        <!-- send to fixity processing -->
+        <to uri="activemq:queue:fixity"/>
+      </multicast>
+    </route>
+
+  </camelContext>
+</beans>

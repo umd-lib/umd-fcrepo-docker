@@ -1,0 +1,161 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+  http://camel.apache.org/schema/spring http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+  <bean id="descriptionURI" class="edu.umd.lib.camel.processors.DescriptionURI"/>
+
+  <camelContext xmlns="http://camel.apache.org/schema/spring" id="Triplestore" streamCache="true">
+    <!--
+    Expected headers:
+    * CamelFcrepoEventName
+    Expected body format:
+    * (None)
+    -->
+    <route id="edu.umd.lib.camel.routes.TriplestoreIndexing">
+      <from uri="activemq:queue:index.triplestore"/>
+      <choice>
+        <when>
+          <simple>${header.CamelFcrepoEventName} starts with "create"</simple>
+          <to uri="direct:index.triplestore.create"/>
+        </when>
+        <when>
+          <simple>${header.CamelFcrepoEventName} starts with "update"</simple>
+          <to uri="direct:index.triplestore.update"/>
+        </when>
+        <when>
+          <simple>${header.CamelFcrepoEventName} starts with "delete"</simple>
+          <to uri="direct:index.triplestore.delete"/>
+        </when>
+      </choice>
+    </route>
+
+    <!--
+    Expected headers:
+    * CamelFcrepoUser
+    * CamelFcrepoPath
+    Expected body format:
+    * (None)
+    Expected environment variables:
+    * REPO_INTERNAL_URL
+    Expected beans:
+    * repoExternalURL
+    -->
+    <route id="edu.umd.lib.camel.routes.GetRDF">
+      <from uri="direct:getRDF"/>
+      <!-- generate a Bearer auth token for the Authorization header -->
+      <process ref="addBearerAuthorization"/>
+      <!-- check whether this is a binary or not -->
+      <setHeader headerName="CamelHttpUri">
+        <simple>${sysenv.REPO_INTERNAL_URL}${header.CamelFcrepoPath}</simple>
+      </setHeader>
+      <setHeader headerName="CamelHttpMethod">
+        <constant>HEAD</constant>
+      </setHeader>
+      <!-- send the HEAD request to fcrepo -->
+      <log loggingLevel="DEBUG" message="HEAD ${header.CamelHttpUri}"/>
+      <to uri="http4:fcrepo"/>
+      <!-- parse the Link headers to check for rel="describedby" -->
+      <process ref="descriptionURI"/>
+      <filter>
+        <simple>${header.DescribedBy}</simple>
+        <setHeader headerName="CamelHttpUri">
+          <header>DescribedBy</header>
+        </setHeader>
+      </filter>
+      <!-- get the current RDF representation of the resource as N-Triples -->
+      <setHeader headerName="CamelHttpMethod">
+        <constant>GET</constant>
+      </setHeader>
+      <setHeader headerName="Accept">
+        <constant>application/n-triples</constant>
+      </setHeader>
+      <setHeader headerName="X-Forwarded-Host">
+        <simple>${bean:repoExternalURL.authority}</simple>
+      </setHeader>
+      <setHeader headerName="X-Forwarded-Proto">
+        <simple>${bean:repoExternalURL.protocol}</simple>
+      </setHeader>
+      <log loggingLevel="DEBUG" message="GET ${header.CamelHttpUri}"/>
+      <to uri="http4:fcrepo"/>
+    </route>
+
+    <!--
+    Expected headers:
+    * CamelFcrepoUser
+    * CamelFcrepoPath
+    Expected body format:
+    * N-Triples
+    -->
+    <route id="edu.umd.lib.camel.routes.IndexTriplestoreCreate">
+      <from uri="direct:index.triplestore.create"/>
+      <to uri="direct:getRDF"/>
+      <!-- insert into the triplestore -->
+      <setBody>
+        <simple>INSERT DATA {\n${body}}</simple>
+      </setBody>
+      <to uri="direct:index.triplestore.http"/>
+    </route>
+
+    <!--
+    Expected headers:
+    * CamelFcrepoUri
+    Expected body format:
+    * N-Triples
+    -->
+    <route id="edu.umd.lib.camel.routes.IndexTriplestoreUpdate">
+      <from uri="direct:index.triplestore.update"/>
+      <to uri="direct:getRDF"/>
+      <!-- replace current triples in triplestore -->
+      <setBody>
+        <simple><![CDATA[
+DELETE { <${header.CamelFcrepoUri}> ?p ?o }
+INSERT {\n${body}}
+WHERE {}]]></simple>
+      </setBody>
+      <to uri="direct:index.triplestore.http"/>
+    </route>
+
+    <!--
+    Expected headers:
+    * CamelFcrepoUri
+    Expected body format:
+    * N-Triples
+    -->
+    <route id="edu.umd.lib.camel.routes.IndexTriplestoreDelete">
+      <from uri="direct:index.triplestore.delete"/>
+      <setBody>
+        <simple><![CDATA[
+DELETE { <${header.CamelFcrepoUri}> ?p ?o }
+INSERT {}
+WHERE  { <${header.CamelFcrepoUri}> ?p ?o }
+        ]]></simple>
+      </setBody>
+      <to uri="direct:index.triplestore.http"/>
+    </route>
+
+    <!--
+    Expected headers:
+    * (None)
+    Expected body format:
+    * N-Triples
+    Expected environment variables:
+    * INDEX_TRIPLESTORE_UPDATE_URI
+    -->
+    <route id="edu.umd.lib.camel.routes.IndexTriplestoreHttp">
+      <from uri="direct:index.triplestore.http"/>
+      <removeHeaders pattern="*"/>
+      <setHeader headerName="CamelHttpUri">
+        <simple>${sysenv.INDEX_TRIPLESTORE_UPDATE_URI}</simple>
+      </setHeader>
+      <setHeader headerName="CamelHttpMethod">
+        <constant>POST</constant>
+      </setHeader>
+      <setHeader headerName="Content-Type">
+        <constant>application/sparql-update</constant>
+      </setHeader>
+      <log loggingLevel="DEBUG" message="SPARQL Update Query: ${body}"/>
+      <to uri="http4:triplestore"/>
+    </route>
+  </camelContext>
+</beans>

@@ -1,0 +1,127 @@
+version: "3.7"
+services:
+  archelon-db:
+    image: postgres:13.0-alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    configs:
+      - source: init-archelon-db.sh
+        target: /docker-entrypoint-initdb.d/init-archelon-db.sh
+    volumes:
+      - archelon-db-data:/var/lib/postgresql/data
+    ports:
+      - 5434:5432
+  audit-db:
+    image: postgres:13.0-alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    configs:
+      - source: init-audit-db.sh
+        target: /docker-entrypoint-initdb.d/init-audit-db.sh
+    volumes:
+      - audit-db-data:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
+  modeshape-db:
+    image: postgres:13.0-alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    configs:
+      - source: init-modeshape-db.sh
+        target: /docker-entrypoint-initdb.d/init-modeshape-db.sh
+    volumes:
+      - modeshape-db-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+  activemq:
+    image: docker.lib.umd.edu/fcrepo-activemq:1.0.0
+    volumes:
+      - activemq-data:/var/opt/activemq
+      - fixity-log-data:/var/log/fixity
+    ports:
+      - 61616:61616
+      - 61613:61613
+      - 8161:8161
+    environment:
+      - AUDIT_DB_HOST=audit-db
+      - AUDIT_DB_PORT=5433
+      - AUDIT_DB_NAME=fcrepo_audit
+      - AUDIT_DB_USERNAME=camel
+      - AUDIT_DB_PASSWORD=camel
+      - AUDIT_EVENT_BASE_URI=http://localhost/audit/
+      - AUDIT_TRIPLESTORE_UPDATE_URI=http://fuseki:3030/fcrepo-audit/update
+      - BATCH_USER=plastron
+      - FIXITY_LOG_DIR=/tmp
+      - INDEX_SOLR_UPDATE_URI=http://solr-fedora4:8983/solr/fedora4/update
+      - INDEX_TRIPLESTORE_UPDATE_URI=http://fuseki:3030/fedora4/update
+      - JWT_SECRET
+      - REPO_EXTERNAL_URL=http://localhost:8080/rest
+      - REPO_INTERNAL_URL=http://repository:8080/rest
+      - SMTP_SERVER=mail:8025
+  solr-fedora4:
+    image: docker.lib.umd.edu/fcrepo-solr-fedora4:1.0.0
+    volumes:
+      - solr-fedora4-data:/var/opt/solr
+    ports:
+      - 8983:8983
+  fuseki:
+    image: docker.lib.umd.edu/fcrepo-fuseki:1.0.0
+    volumes:
+      - fuseki-data:/var/opt/fuseki
+    ports:
+      - 3030:3030
+  repository:
+    image: docker.lib.umd.edu/fcrepo-webapp:2.5.0
+    configs:
+      - source: basic-auth.properties
+        target: /etc/fcrepo/basic-auth.properties
+      - source: ip-mapping.properties
+        target: /etc/fcrepo/ip-mapping.properties
+    volumes:
+      - repository-data:/var/umd-fcrepo-webapp
+    ports:
+      - 8080:8080
+    environment:
+      - ACTIVEMQ_URL=tcp://activemq:61616
+      - CAS_URL_PREFIX=https://shib.idm.umd.edu/shibboleth-idp/profile/cas
+      - CREDENTIALS_FILE=/etc/fcrepo/basic-auth.properties
+      - FCREPO_BASE_URL=http://localhost:8080/
+      - IP_MAPPING_FILE=/etc/fcrepo/ip-mapping.properties
+      - JWT_SECRET
+      - LDAP_URL=ldap://directory.umd.edu
+      - LDAP_BASE_DN=ou=people,dc=umd,dc=edu
+      - LDAP_BIND_DN=uid=libr-fedora,cn=auth,ou=ldap,dc=umd,dc=edu
+      - LDAP_BIND_PASSWORD
+      - LDAP_MEMBER_ATTRIBUTE=memberOf
+      - LDAP_ADMIN_GROUP=cn=Application_Roles:Libraries:FCREPO:FCREPO-Administrator,ou=grouper,ou=group,dc=umd,dc=edu
+      - LDAP_USER_GROUP=cn=Application_Roles:Libraries:FCREPO:FCREPO-User,ou=grouper,ou=group,dc=umd,dc=edu
+      - MODESHAPE_DB_DRIVER=org.postgresql.Driver
+      - MODESHAPE_DB_URL=jdbc:postgresql://modeshape-db:5432/fcrepo_modeshape5
+      - MODESHAPE_DB_USERNAME=fcrepo
+      - MODESHAPE_DB_PASSWORD
+  mail:
+    # debugging mail server for local development
+    image: docker.lib.umd.edu/fcrepo-mail:1.0.0
+    ports:
+      - 8025:8025
+
+configs:
+  basic-auth.properties:
+    file: ./repository/basic-auth.properties
+  init-archelon-db.sh:
+    file: ./postgres-archelon/init-archelon-db.sh
+  init-audit-db.sh:
+    file: ./postgres-audit/init-audit-db.sh
+  init-modeshape-db.sh:
+    file: ./postgres-modeshape/init-modeshape-db.sh
+  ip-mapping.properties:
+    file: ./repository/ip-mapping.properties
+volumes:
+  archelon-db-data:
+  audit-db-data:
+  modeshape-db-data:
+  activemq-data:
+  fixity-log-data:
+  solr-fedora4-data:
+  fuseki-data:
+  repository-data:
