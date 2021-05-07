@@ -34,7 +34,7 @@ services:
     ports:
       - 5432:5432
   activemq:
-    image: docker.lib.umd.edu/fcrepo-activemq:1.0.0
+    image: docker.lib.umd.edu/fcrepo-messaging:1.0.0
     volumes:
       - activemq-data:/var/opt/activemq
       - fixity-log-data:/var/log/fixity

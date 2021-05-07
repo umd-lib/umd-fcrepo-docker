@@ -4,10 +4,18 @@ Docker images for the Fedora (fcrepo) applications.
 
 ## Prerequisites
 
-These umd-fcrepo-webapp Docker images is defined in the
-[umd-fcrepo-webapp] repository, and must be built
+These Docker images are defined in external repos, and must be built
 separately before deploying the umd-fcrepo-docker stack.
 
+* [umd-fcrepo-messaging] Docker image:
+  
+  ```bash
+  cd ~/git
+  git clone git@github.com:umd-lib/umd-fcrepo-messaging.git
+  cd umd-fcrepo-messaging
+  docker build -t docker.lib.umd.edu/fcrepo-activemq activemq
+  ```
+  
 * [umd-fcrepo-webapp] Docker image:
 
   ```bash
@@ -139,10 +147,10 @@ Database initialization scripts:
 Each of the images may also be built and run individually. See the README
 files for each image for more information:
 
-* [ActiveMQ](activemq/README.md)
 * [Solr (fedora4 Core)](solr-fedora4/README.md)
 * [Fuseki](fuseki/README.md)
 * [Mail](mail/README.md)
 
+[umd-fcrepo-messaging]: https://github.com/umd-lib/umd-fcrepo-messaging
 [umd-fcrepo-webapp]: https://github.com/umd-lib/umd-fcrepo-webapp
 [aiosmtpd]: https://aiosmtpd.readthedocs.io/en/latest/README.html
