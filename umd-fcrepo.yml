@@ -59,7 +59,7 @@ services:
       - REPO_INTERNAL_URL=http://repository:8080/rest
       - SMTP_SERVER=mail:8025
   solr-fedora4:
-    image: docker.lib.umd.edu/fcrepo-solr-fedora4:1.0.0
+    image: docker.lib.umd.edu/fcrepo-solr-fedora4:1.0.1
     volumes:
       - solr-fedora4-data:/var/opt/solr
     ports:
@@ -71,7 +71,7 @@ services:
     ports:
       - 3030:3030
   repository:
-    image: docker.lib.umd.edu/fcrepo-webapp:2.5.0
+    image: docker.lib.umd.edu/fcrepo-webapp:2.5.3
     configs:
       - source: basic-auth.properties
         target: /etc/fcrepo/basic-auth.properties
@@ -84,6 +84,7 @@ services:
     environment:
       - ACTIVEMQ_URL=tcp://activemq:61616
       - CAS_URL_PREFIX=https://shib.idm.umd.edu/shibboleth-idp/profile/cas
+      - CONTEXT_PATH=/fcrepo
       - CREDENTIALS_FILE=/etc/fcrepo/basic-auth.properties
       - FCREPO_BASE_URL=http://fcrepo-local:8080/
       - IP_MAPPING_FILE=/etc/fcrepo/ip-mapping.properties
