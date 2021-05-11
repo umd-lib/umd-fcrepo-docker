@@ -8,12 +8,21 @@ These Docker images are defined in external repos, and must be built
 separately before deploying the umd-fcrepo-docker stack.
 
 * [umd-fcrepo-messaging] Docker image:
-  
+
   ```bash
   cd ~/git
   git clone git@github.com:umd-lib/umd-fcrepo-messaging.git
   cd umd-fcrepo-messaging
-  docker build -t docker.lib.umd.edu/fcrepo-activemq activemq
+  docker build -t docker.lib.umd.edu/fcrepo-messaging .
+  ```
+
+* [umd-fcrepo-solr] Docker image:
+  
+  ```bash
+  cd ~/git
+  git clone git@github.com:umd-lib/umd-fcrepo-solr.git
+  cd umd-fcrepo-solr
+  docker build -t docker.lib.umd.edu/fcrepo-solr-fedora4 .
   ```
   
 * [umd-fcrepo-webapp] Docker image:
@@ -36,8 +45,6 @@ cd umd-fcrepo-docker
 Build images:
 
 ```bash
-docker build -t docker.lib.umd.edu/fcrepo-activemq activemq
-docker build -t docker.lib.umd.edu/fcrepo-solr-fedora4 solr-fedora4
 docker build -t docker.lib.umd.edu/fcrepo-fuseki fuseki
 docker build -t docker.lib.umd.edu/fcrepo-fixity fixity
 docker build -t docker.lib.umd.edu/fcrepo-mail mail
@@ -147,10 +154,10 @@ Database initialization scripts:
 Each of the images may also be built and run individually. See the README
 files for each image for more information:
 
-* [Solr (fedora4 Core)](solr-fedora4/README.md)
 * [Fuseki](fuseki/README.md)
 * [Mail](mail/README.md)
 
 [umd-fcrepo-messaging]: https://github.com/umd-lib/umd-fcrepo-messaging
+[umd-fcrepo-solr]: https://github.com/umd-lib/umd-fcrepo-solr
 [umd-fcrepo-webapp]: https://github.com/umd-lib/umd-fcrepo-webapp
 [aiosmtpd]: https://aiosmtpd.readthedocs.io/en/latest/README.html
