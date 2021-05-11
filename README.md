@@ -7,32 +7,32 @@ Docker images for the Fedora (fcrepo) applications.
 These Docker images are defined in external repos, and must be built
 separately before deploying the umd-fcrepo-docker stack.
 
-* [umd-fcrepo-messaging] Docker image:
-
-  ```bash
-  cd ~/git
-  git clone git@github.com:umd-lib/umd-fcrepo-messaging.git
-  cd umd-fcrepo-messaging
-  docker build -t docker.lib.umd.edu/fcrepo-messaging .
-  ```
-
-* [umd-fcrepo-solr] Docker image:
+* **docker.lib.umd.edu/fcrepo-messaging** (from [umd-fcrepo-messaging]):
   
-  ```bash
-  cd ~/git
-  git clone git@github.com:umd-lib/umd-fcrepo-solr.git
-  cd umd-fcrepo-solr
-  docker build -t docker.lib.umd.edu/fcrepo-solr-fedora4 .
-  ```
-  
-* [umd-fcrepo-webapp] Docker image:
+    ```bash
+    cd ~/git
+    git clone git@github.com:umd-lib/umd-fcrepo-messaging.git
+    cd umd-fcrepo-messaging
+    docker build -t docker.lib.umd.edu/fcrepo-messaging .
+    ```
 
-  ```bash
-  cd ~/git
-  git clone git@github.com:umd-lib/umd-fcrepo-webapp.git
-  cd umd-fcrepo-webapp
-  docker build -t docker.lib.umd.edu/fcrepo-webapp .
-  ```
+* **docker.lib.umd.edu/fcrepo-solr-fedora4** (from [umd-fcrepo-solr]):
+  
+    ```bash
+    cd ~/git
+    git clone git@github.com:umd-lib/umd-fcrepo-solr.git
+    cd umd-fcrepo-solr
+    docker build -t docker.lib.umd.edu/fcrepo-solr-fedora4 .
+    ```
+  
+* **docker.lib.umd.edu/fcrepo-webapp** (from [umd-fcrepo-webapp]):
+
+    ```bash
+    cd ~/git
+    git clone git@github.com:umd-lib/umd-fcrepo-webapp.git
+    cd umd-fcrepo-webapp
+    docker build -t docker.lib.umd.edu/fcrepo-webapp .
+    ```
 
 ## Quick Start
 
