@@ -1,16 +1,5 @@
 version: "3.7"
 services:
-  archelon-db:
-    image: postgres:13.0-alpine
-    environment:
-      - POSTGRES_PASSWORD=postgres
-    configs:
-      - source: init-archelon-db.sh
-        target: /docker-entrypoint-initdb.d/init-archelon-db.sh
-    volumes:
-      - archelon-db-data:/var/lib/postgresql/data
-    ports:
-      - 5434:5432
   audit-db:
     image: postgres:13.0-alpine
     environment:
@@ -34,7 +23,7 @@ services:
     ports:
       - 5432:5432
   activemq:
-    image: docker.lib.umd.edu/fcrepo-messaging:latest
+    image: docker.lib.umd.edu/fcrepo-messaging:1.0.1
     volumes:
       - activemq-data:/var/opt/activemq
       - fixity-log-data:/var/log/fixity
@@ -71,7 +60,7 @@ services:
     ports:
       - 3030:3030
   repository:
-    image: docker.lib.umd.edu/fcrepo-webapp:latest
+    image: docker.lib.umd.edu/fcrepo-webapp:2.6.0
     configs:
       - source: basic-auth.properties
         target: /etc/fcrepo/basic-auth.properties
@@ -114,8 +103,6 @@ services:
 configs:
   basic-auth.properties:
     file: ./repository/basic-auth.properties
-  init-archelon-db.sh:
-    file: ./postgres-archelon/init-archelon-db.sh
   init-audit-db.sh:
     file: ./postgres-audit/init-audit-db.sh
   init-modeshape-db.sh:
@@ -123,7 +110,6 @@ configs:
   ip-mapping.properties:
     file: ./repository/ip-mapping.properties
 volumes:
-  archelon-db-data:
   audit-db-data:
   modeshape-db-data:
   activemq-data:

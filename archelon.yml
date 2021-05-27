@@ -1,0 +1,46 @@
+version: "3.7"
+services:
+  archelon-db:
+    image: postgres:13.0-alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    configs:
+      - source: init-archelon-db.sh
+        target: /docker-entrypoint-initdb.d/init-archelon-db.sh
+    volumes:
+      - archelon-db-data:/var/lib/postgresql/data
+    ports:
+      - 5434:5432
+  archelon-stomp-listener:
+    image: docker.lib.umd.edu/archelon
+    env_file:
+      - ./archelon/archelon.env
+    environment:
+      - LDAP_BIND_PASSWORD
+      - SECRET_KEY_BASE
+    command: [ "bundle", "exec", "rails", "stomp:listen" ]
+  archelon:
+    image: docker.lib.umd.edu/archelon
+    ports:
+      - 3000:3000
+      - 2222:22
+    environment:
+      - LDAP_BIND_PASSWORD
+      - RAILS_SERVE_STATIC_FILES=1
+      - SECRET_KEY_BASE
+    env_file:
+      - ./archelon/archelon.env
+    configs:
+      - source: archelon_id.pub
+        target: /home/plastron/.ssh/authorized_keys
+        mode: 0600
+    volumes:
+      - archelon-data:/var/opt/archelon
+configs:
+  archelon_id.pub:
+    file: ./plastron/archelon_id.pub
+  init-archelon-db.sh:
+    file: ./postgres-archelon/init-archelon-db.sh
+volumes:
+  archelon-db-data:
+  archelon-data:
