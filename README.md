@@ -8,7 +8,7 @@ These Docker images are defined in external repos, and must be built
 separately before deploying the umd-fcrepo-docker stack.
 
 * **docker.lib.umd.edu/fcrepo-messaging** (from [umd-fcrepo-messaging]):
-  
+
     ```bash
     cd ~/git
     git clone git@github.com:umd-lib/umd-fcrepo-messaging.git
@@ -17,14 +17,14 @@ separately before deploying the umd-fcrepo-docker stack.
     ```
 
 * **docker.lib.umd.edu/fcrepo-solr-fedora4** (from [umd-fcrepo-solr]):
-  
+
     ```bash
     cd ~/git
     git clone git@github.com:umd-lib/umd-fcrepo-solr.git
     cd umd-fcrepo-solr
     docker build -t docker.lib.umd.edu/fcrepo-solr-fedora4 .
     ```
-  
+
 * **docker.lib.umd.edu/fcrepo-webapp** (from [umd-fcrepo-webapp]):
 
     ```bash
@@ -94,6 +94,7 @@ To deploy the complete stack, including Archelon and Plastron, do the following:
         cd archelon
         docker build -t docker.lib.umd.edu/archelon .
         ```
+
     * **docker.lib.umd.edu/plastrond** (from [plastron]):
 
         ```bash
@@ -102,7 +103,9 @@ To deploy the complete stack, including Archelon and Plastron, do the following:
         cd plastron
         docker build -t docker.lib.umd.edu/plastrond .
         ```
+
 2. Export environment variables:
+
     ```bash
     export MODESHAPE_DB_PASSWORD=...  # default in the umd-fcrepo-docker stack is "fcrepo"
     export LDAP_BIND_PASSWORD=...     # see the SSDR "Identities" document for this
@@ -112,6 +115,7 @@ To deploy the complete stack, including Archelon and Plastron, do the following:
     export SECRET_KEY_BASE=...        # typically generated using "rails secret"
                                       # in the archelon repository
     ```
+
 3. Deploy the umd-fcrepo stack with additional config files:
 
     ```bash
@@ -162,14 +166,14 @@ docker service logs -f umd-fcrepo_mail
 * ActiveMQ admin console: <http://localhost:8161/admin>
 * Solr admin console: <http://localhost:8983/solr/#/>
 * Fuseki admin console: <http://localhost:3030/>
-* Fedora repository REST API: <http://localhost:8080/rest/>
-* Fedora repository login/user profile page: <http://localhost:8080/user/>
+* Fedora repository REST API: <http://localhost:8080/fcrepo/rest/>
+* Fedora repository login/user profile page: <http://localhost:8080/fcrepo/user/>
 * Archelon home page: <http://localhost:3000/> (if
   [deployed with Archelon])
 
 ### Database Ports
 
-The base stack starts 2 PostgreSQL containers, each containing a single 
+The base stack starts 2 PostgreSQL containers, each containing a single
 database:
 
 | Container Name | Port | Database Name     |
@@ -190,7 +194,7 @@ psql -U archelon -h localhost -p 5433 fcrepo_audit
 psql -U camel -h localhost -p 5433 fcrepo_audit
 ```
 
-If the stack is [deployed with Archelon], it will include an additional 
+If the stack is [deployed with Archelon], it will include an additional
 database:
 
 | Container Name | Port | Database Name     |
