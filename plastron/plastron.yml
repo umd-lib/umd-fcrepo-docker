@@ -4,9 +4,10 @@ REPOSITORY:
   RELPATH: /pcdm
   JWT_SECRET: ${JWT_SECRET}
   LOG_DIR: /var/log/plastron
+  JOB_DIR: /var/opt/plastron/jobs
 MESSAGE_BROKER:
   SERVER: activemq:61613
-  MESSAGE_STORE_DIR: /var/opt/plastron/msg/export
+  MESSAGE_STORE_DIR: /var/opt/plastron/msg
   DESTINATIONS:
     JOBS: /queue/plastron.jobs
     JOB_PROGRESS: /topic/plastron.jobs.progress
