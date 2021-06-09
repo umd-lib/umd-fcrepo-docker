@@ -11,6 +11,25 @@ services:
       - archelon-db-data:/var/lib/postgresql/data
     ports:
       - 5434:5432
+  archelon-sftp:
+    image: panubo/sshd:1.3.0
+    ports:
+      - 2200:22
+    environment:
+      - SSH_USERS=plastron:2200:2200
+      - SFTP_MODE=true
+      - SFTP_CHROOT=/data
+    configs:
+      - source: init-archelon-sftp.sh
+        target: /etc/entrypoint.d/init-archelon-sftp.sh
+      - source: archelon_id.pub
+        target: /etc/authorized_keys/plastron
+      - source: get-plastron-authorized-keys.sh
+        target: /etc/archelon/get-plastron-authorized-keys.sh
+    volumes:
+      - archelon-import-data:/data/imports
+      - archelon-export-data:/data/exports
+      - archelon-sftp-host-keys:/etc/ssh/keys
   archelon-stomp-listener:
     image: docker.lib.umd.edu/archelon:latest
     env_file:
@@ -23,24 +42,26 @@ services:
     image: docker.lib.umd.edu/archelon:latest
     ports:
       - 3000:3000
-      - 2222:22
     environment:
       - LDAP_BIND_PASSWORD
       - RAILS_SERVE_STATIC_FILES=1
       - SECRET_KEY_BASE
     env_file:
       - ./archelon/archelon.env
-    configs:
-      - source: archelon_id.pub
-        target: /home/plastron/.ssh/authorized_keys
-        mode: 0600
     volumes:
-      - archelon-data:/var/opt/archelon
+      - archelon-import-data:/var/opt/archelon/imports:ro
+      - archelon-export-data:/var/opt/archelon/exports:ro
 configs:
   archelon_id.pub:
     file: ./plastron/archelon_id.pub
   init-archelon-db.sh:
     file: ./postgres-archelon/init-archelon-db.sh
+  init-archelon-sftp.sh:
+    file: ./archelon/init-archelon-sftp.sh
+  get-plastron-authorized-keys.sh:
+    file: ./archelon/get-plastron-authorized-keys.sh
 volumes:
   archelon-db-data:
-  archelon-data:
+  archelon-import-data:
+  archelon-export-data:
+  archelon-sftp-host-keys:
