@@ -92,7 +92,8 @@ To deploy the complete stack, including Archelon and Plastron, do the following:
         cd ~/git
         git clone git@github.com:umd-lib/archelon.git
         cd archelon
-        docker build -t docker.lib.umd.edu/archelon .
+        docker build -t docker.lib.umd.edu/archelon -f Dockerfile .
+        docker build -t docker.lib.umd.edu/archelon-sftp -f Dockerfile.sftp .
         ```
 
     * **docker.lib.umd.edu/plastrond** (from [plastron]):
