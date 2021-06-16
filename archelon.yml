@@ -39,6 +39,7 @@ services:
       - LDAP_BIND_PASSWORD
       - RAILS_SERVE_STATIC_FILES=1
       - SECRET_KEY_BASE
+      - FCREPO_AUTH_TOKEN
     env_file:
       - ./archelon/archelon.env
     volumes:

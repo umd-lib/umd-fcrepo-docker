@@ -84,7 +84,24 @@ repository services via Docker, and run Archelon and/or Plastron locally.
 
 To deploy the complete stack, including Archelon and Plastron, do the following:
 
-1. Build the images:
+1. Create an "FCREPO_AUTH_TOKEN" JWT token for Archelon:
+
+   a) Deploy the "umd-fcrepo" stack as described in the "Quick Start" section.
+
+   b) In a web browser, go to
+      <http://fcrepo-local:8080/fcrepo/user/>
+      and log in. Then go to
+      <http://fcrepo-local:8080/fcrepo/user/token?subject=archelon&role=fedoraAdmin>
+
+      Copy the JWT token for use in the steps below.
+
+   c) Stop the "umd-fcrepo" stack:
+
+      ```
+      docker stack rm umd-fcrepo
+      ```
+
+2. Build the images:
 
     * **docker.lib.umd.edu/archelon** (from [archelon]):
 
@@ -105,7 +122,7 @@ To deploy the complete stack, including Archelon and Plastron, do the following:
         docker build -t docker.lib.umd.edu/plastrond .
         ```
 
-2. Export environment variables:
+3. Export environment variables:
 
     ```bash
     export MODESHAPE_DB_PASSWORD=...  # default in the umd-fcrepo-docker stack is "fcrepo"
@@ -115,9 +132,10 @@ To deploy the complete stack, including Archelon and Plastron, do the following:
                                       #   uuidgen | shasum -a256 | cut -d' ' -f1
     export SECRET_KEY_BASE=...        # typically generated using "rails secret"
                                       # in the archelon repository
+    export FCREPO_AUTH_TOKEN=         # JWT Token for Archelon from Step 1b above
     ```
 
-3. Deploy the umd-fcrepo stack with additional config files:
+4. Deploy the umd-fcrepo stack with additional config files:
 
     ```bash
     cd ~/git/umd-fcrepo-docker
