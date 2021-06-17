@@ -8,7 +8,7 @@ These Docker images are defined in external repos, and must be built
 separately before deploying the umd-fcrepo-docker stack.
 
 * **docker.lib.umd.edu/fcrepo-messaging** (from [umd-fcrepo-messaging]):
-  
+
     ```bash
     cd ~/git
     git clone git@github.com:umd-lib/umd-fcrepo-messaging.git
@@ -17,14 +17,14 @@ separately before deploying the umd-fcrepo-docker stack.
     ```
 
 * **docker.lib.umd.edu/fcrepo-solr-fedora4** (from [umd-fcrepo-solr]):
-  
+
     ```bash
     cd ~/git
     git clone git@github.com:umd-lib/umd-fcrepo-solr.git
     cd umd-fcrepo-solr
     docker build -t docker.lib.umd.edu/fcrepo-solr-fedora4 .
     ```
-  
+
 * **docker.lib.umd.edu/fcrepo-webapp** (from [umd-fcrepo-webapp]):
 
     ```bash
@@ -75,6 +75,77 @@ source .env && docker stack deploy --with-registry-auth -c umd-fcrepo.yml umd-fc
 
 Any `.env` file will be ignored by Git.
 
+### Deploying with Archelon and Plastron
+
+This repository also contains Docker compose files for including Archelon and
+the Plastron daemon in the deployed stack. These are kept separate from the main
+umd-fcrepo.yml config to assist with development: You can deploy just the core
+repository services via Docker, and run Archelon and/or Plastron locally.
+
+To deploy the complete stack, including Archelon and Plastron, do the following:
+
+1. Create an "FCREPO_AUTH_TOKEN" JWT token for Archelon:
+
+   a) Deploy the "umd-fcrepo" stack as described in the "Quick Start" section.
+
+   b) In a web browser, go to
+      <http://fcrepo-local:8080/fcrepo/user/>
+      and log in. Then go to
+      <http://fcrepo-local:8080/fcrepo/user/token?subject=archelon&role=fedoraAdmin>
+
+      Copy the JWT token for use in the steps below.
+
+   c) Stop the "umd-fcrepo" stack:
+
+      ```
+      docker stack rm umd-fcrepo
+      ```
+
+2. Build the images:
+
+    * **docker.lib.umd.edu/archelon** (from [archelon]):
+
+        ```bash
+        cd ~/git
+        git clone git@github.com:umd-lib/archelon.git
+        cd archelon
+        docker build -t docker.lib.umd.edu/archelon -f Dockerfile .
+        docker build -t docker.lib.umd.edu/archelon-sftp -f Dockerfile.sftp .
+        ```
+
+    * **docker.lib.umd.edu/plastrond** (from [plastron]):
+
+        ```bash
+        cd ~/git
+        git clone git@github.com:umd-lib/plastron.git
+        cd plastron
+        docker build -t docker.lib.umd.edu/plastrond .
+        ```
+
+3. Export environment variables:
+
+    ```bash
+    export MODESHAPE_DB_PASSWORD=...  # default in the umd-fcrepo-docker stack is "fcrepo"
+    export LDAP_BIND_PASSWORD=...     # see the SSDR "Identities" document for this
+    export JWT_SECRET=...             # can be anything, but must be sufficiently long
+                                      # one method to generate a random secret is:
+                                      #   uuidgen | shasum -a256 | cut -d' ' -f1
+    export SECRET_KEY_BASE=...        # typically generated using "rails secret"
+                                      # in the archelon repository
+    export FCREPO_AUTH_TOKEN=         # JWT Token for Archelon from Step 1b above
+    ```
+
+4. Deploy the umd-fcrepo stack with additional config files:
+
+    ```bash
+    cd ~/git/umd-fcrepo-docker
+    docker stack deploy -c umd-fcrepo.yml -c archelon.yml -c plastrond.yml umd-fcrepo
+    ```
+
+⚠️ The [archelon_id](plastron/archelon_id)/[archelon_id.pub](plastron/archelon_id.pub)
+keypair should **not** be used in production. It is included in this repository
+merely as a development convenience.
+
 ### Fixity checking
 
 The "docker.lib.umd.edu/fcrepo-fixity" image can be used to run fixity checking,
@@ -114,18 +185,20 @@ docker service logs -f umd-fcrepo_mail
 * ActiveMQ admin console: <http://localhost:8161/admin>
 * Solr admin console: <http://localhost:8983/solr/#/>
 * Fuseki admin console: <http://localhost:3030/>
-* Fedora repository REST API: <http://localhost:8080/rest/>
-* Fedora repository login/user profile page: <http://localhost:8080/user/>
+* Fedora repository REST API: <http://localhost:8080/fcrepo/rest/>
+* Fedora repository login/user profile page: <http://localhost:8080/fcrepo/user/>
+* Archelon home page: <http://localhost:3000/> (if
+  [deployed with Archelon])
 
 ### Database Ports
 
-This stack starts 3 PostgreSQL containers, each containing a single database:
+The base stack starts 2 PostgreSQL containers, each containing a single
+database:
 
 | Container Name | Port | Database Name     |
 |----------------|------|-------------------|
 | modeshape-db   | 5432 | fcrepo_modeshape5 |
 | audit-db       | 5433 | fcrepo_audit      |
-| archelon-db    | 5434 | archelon          |
 
 These can be accessed from the host using the psql command-line tool:
 
@@ -138,7 +211,16 @@ psql -U fcrepo -h localhost -p 5432 fcrepo_modeshape5
 psql -U archelon -h localhost -p 5433 fcrepo_audit
 # camel user has read/write access to the history table
 psql -U camel -h localhost -p 5433 fcrepo_audit
+```
 
+If the stack is [deployed with Archelon], it will include an additional
+database:
+
+| Container Name | Port | Database Name     |
+|----------------|------|-------------------|
+| archelon-db    | 5434 | archelon          |
+
+```bash
 # Archelon database backing the Archelon Rails app
 psql -U archelon -h localhost -p 5434 archelon
 ```
@@ -161,3 +243,6 @@ files for each image for more information:
 [umd-fcrepo-solr]: https://github.com/umd-lib/umd-fcrepo-solr
 [umd-fcrepo-webapp]: https://github.com/umd-lib/umd-fcrepo-webapp
 [aiosmtpd]: https://aiosmtpd.readthedocs.io/en/latest/README.html
+[archelon]: https://github.com/umd-lib/archelon
+[plastron]: https://github.com/umd-lib/plastron
+[deployed with Archelon]: README.md#deploying-with-archelon-and-plastron

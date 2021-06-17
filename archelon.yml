@@ -1,0 +1,59 @@
+version: "3.7"
+services:
+  archelon-db:
+    image: postgres:13.0-alpine
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    configs:
+      - source: init-archelon-db.sh
+        target: /docker-entrypoint-initdb.d/init-archelon-db.sh
+    volumes:
+      - archelon-db-data:/var/lib/postgresql/data
+    ports:
+      - 5434:5432
+  archelon-sftp:
+    image: docker.lib.umd.edu/archelon-sftp:latest
+    ports:
+      - 2200:22
+    configs:
+      - source: archelon_id.pub
+        target: /etc/authorized_keys/plastron
+      - source: get-plastron-authorized-keys.sh
+        target: /etc/archelon/get-plastron-authorized-keys.sh
+    volumes:
+      - archelon-import-export-data:/data
+      - archelon-sftp-host-keys:/etc/ssh/keys
+  archelon-stomp-listener:
+    image: docker.lib.umd.edu/archelon:latest
+    env_file:
+      - ./archelon/archelon.env
+    environment:
+      - LDAP_BIND_PASSWORD
+      - SECRET_KEY_BASE
+    command: [ "bundle", "exec", "rails", "stomp:listen" ]
+  archelon:
+    image: docker.lib.umd.edu/archelon:latest
+    ports:
+      - 3000:3000
+    environment:
+      - LDAP_BIND_PASSWORD
+      - RAILS_SERVE_STATIC_FILES=1
+      - SECRET_KEY_BASE
+      - FCREPO_AUTH_TOKEN
+    env_file:
+      - ./archelon/archelon.env
+    volumes:
+      - archelon-import-export-data:/var/opt/archelon:ro
+configs:
+  archelon_id.pub:
+    file: ./plastron/archelon_id.pub
+  init-archelon-db.sh:
+    file: ./postgres-archelon/init-archelon-db.sh
+  init-archelon-sftp.sh:
+    file: ./archelon/init-archelon-sftp.sh
+  get-plastron-authorized-keys.sh:
+    file: ./archelon/get-plastron-authorized-keys.sh
+volumes:
+  archelon-db-data:
+  archelon-import-export-data:
+  archelon-sftp-host-keys:

@@ -1,16 +1,5 @@
 version: "3.7"
 services:
-  archelon-db:
-    image: postgres:13.0-alpine
-    environment:
-      - POSTGRES_PASSWORD=postgres
-    configs:
-      - source: init-archelon-db.sh
-        target: /docker-entrypoint-initdb.d/init-archelon-db.sh
-    volumes:
-      - archelon-db-data:/var/lib/postgresql/data
-    ports:
-      - 5434:5432
   audit-db:
     image: postgres:13.0-alpine
     environment:
@@ -59,13 +48,13 @@ services:
       - REPO_INTERNAL_URL=http://repository:8080/fcrepo/rest
       - SMTP_SERVER=mail:8025
   solr-fedora4:
-    image: docker.lib.umd.edu/fcrepo-solr-fedora4:1.0.1
+    image: docker.lib.umd.edu/fcrepo-solr-fedora4:latest
     volumes:
       - solr-fedora4-data:/var/opt/solr
     ports:
       - 8983:8983
   fuseki:
-    image: docker.lib.umd.edu/fcrepo-fuseki:1.0.0
+    image: docker.lib.umd.edu/fcrepo-fuseki:latest
     volumes:
       - fuseki-data:/var/opt/fuseki
     ports:
@@ -107,15 +96,13 @@ services:
           - fcrepo-local
   mail:
     # debugging mail server for local development
-    image: docker.lib.umd.edu/fcrepo-mail:1.0.0
+    image: docker.lib.umd.edu/fcrepo-mail:latest
     ports:
       - 8025:8025
 
 configs:
   basic-auth.properties:
     file: ./repository/basic-auth.properties
-  init-archelon-db.sh:
-    file: ./postgres-archelon/init-archelon-db.sh
   init-audit-db.sh:
     file: ./postgres-audit/init-audit-db.sh
   init-modeshape-db.sh:
@@ -123,7 +110,6 @@ configs:
   ip-mapping.properties:
     file: ./repository/ip-mapping.properties
 volumes:
-  archelon-db-data:
   audit-db-data:
   modeshape-db-data:
   activemq-data:
