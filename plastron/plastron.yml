@@ -4,7 +4,7 @@ REPOSITORY:
   RELPATH: /pcdm
   JWT_SECRET: ${JWT_SECRET}
   LOG_DIR: /var/log/plastron
-  JOB_DIR: /var/opt/plastron/jobs
+  JOBS_DIR: /var/opt/plastron/jobs
 MESSAGE_BROKER:
   SERVER: activemq:61613
   MESSAGE_STORE_DIR: /var/opt/plastron/msg
@@ -18,3 +18,4 @@ COMMANDS:
     SSH_PRIVATE_KEY: /etc/plastron/auth/archelon_id
   IMPORT:
     SSH_PRIVATE_KEY: /etc/plastron/auth/archelon_id
+    JOBS_DIR: /var/opt/plastron/jobs
