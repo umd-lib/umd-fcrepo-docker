@@ -11,7 +11,10 @@ services:
         target: /etc/plastron/auth/archelon_id
         mode: 0400
     volumes:
-      - plastrond:/var/opt/plastron
+      - plastrond-jobs:/var/opt/plastron/jobs
+      - plastrond-messages:/var/opt/plastron/msg
+    ports:
+      - 5000:5000
 configs:
   archelon_id:
     # Private key for archelon SFTP
@@ -20,4 +23,5 @@ configs:
   plastrond:
     file: ./plastron/plastron.yml
 volumes:
-  plastrond:
+  plastrond-jobs:
+  plastrond-messages:
