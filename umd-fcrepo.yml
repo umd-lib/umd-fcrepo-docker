@@ -60,7 +60,9 @@ services:
     ports:
       - 3030:3030
   repository:
-    image: docker.lib.umd.edu/fcrepo-webapp:latest
+    # pin the repository image to 2.6.0, due to a bug in the 2.7.0-rc1 image
+    # see https://issues.umd.edu/browse/LIBFCREPO-1061
+    image: docker.lib.umd.edu/fcrepo-webapp:2.6.0
     configs:
       - source: basic-auth.properties
         target: /etc/fcrepo/basic-auth.properties
