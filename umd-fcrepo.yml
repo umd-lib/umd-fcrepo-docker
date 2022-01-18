@@ -47,6 +47,13 @@ services:
       - REPO_EXTERNAL_URL=http://fcrepo-local:8080/fcrepo/rest
       - REPO_INTERNAL_URL=http://repository:8080/fcrepo/rest
       - SMTP_SERVER=mail:8025
+  jmx_prometheus-activemq:
+    image: docker.lib.umd.edu/jmx_prometheus:latest
+    configs:
+      - source: activemq.yml
+        target: /etc/jmx_prometheus.yml
+    ports:
+      - "5556:5556"
   solr-fedora4:
     image: docker.lib.umd.edu/fcrepo-solr-fedora4:latest
     volumes:
@@ -111,6 +118,8 @@ configs:
     file: ./postgres-modeshape/init-modeshape-db.sh
   ip-mapping.properties:
     file: ./repository/ip-mapping.properties
+  activemq.yml:
+    file: ./jmx_prometheus/activemq.yml
 volumes:
   audit-db-data:
   modeshape-db-data:
