@@ -10,7 +10,7 @@ services:
     volumes:
       - audit-db-data:/var/lib/postgresql/data
     ports:
-      - 5433:5432
+      - "5433:5432"
   modeshape-db:
     image: postgres:13.0-alpine
     environment:
@@ -21,16 +21,16 @@ services:
     volumes:
       - modeshape-db-data:/var/lib/postgresql/data
     ports:
-      - 5432:5432
+      - "5432:5432"
   activemq:
     image: docker.lib.umd.edu/fcrepo-messaging:latest
     volumes:
       - activemq-data:/var/opt/activemq
       - fixity-log-data:/var/log/fixity
     ports:
-      - 61616:61616
-      - 61613:61613
-      - 8161:8161
+      - "61616:61616"
+      - "61613:61613"
+      - "8161:8161"
     environment:
       - AUDIT_DB_HOST=audit-db
       - AUDIT_DB_PORT=5432
@@ -52,13 +52,13 @@ services:
     volumes:
       - solr-fedora4-data:/var/opt/solr
     ports:
-      - 8983:8983
+      - "8983:8983"
   fuseki:
     image: docker.lib.umd.edu/fcrepo-fuseki:latest
     volumes:
       - fuseki-data:/var/opt/fuseki
     ports:
-      - 3030:3030
+      - "3030:3030"
   repository:
     # pin the repository image to 2.6.0, due to a bug in the 2.7.0-rc1 image
     # see https://issues.umd.edu/browse/LIBFCREPO-1061
@@ -72,7 +72,7 @@ services:
       - repository-data:/var/umd-fcrepo-webapp
       - repository-messaging-data:/var/activemq
     ports:
-      - 8080:8080
+      - "8080:8080"
     environment:
       - ACTIVEMQ_URL=tcp://activemq:61616
       - CAS_URL_PREFIX=https://shib.idm.umd.edu/shibboleth-idp/profile/cas
@@ -100,7 +100,7 @@ services:
     # debugging mail server for local development
     image: docker.lib.umd.edu/fcrepo-mail:latest
     ports:
-      - 8025:8025
+      - "8025:8025"
 
 configs:
   basic-auth.properties:
