@@ -7,6 +7,15 @@ Docker images for the Fedora (fcrepo) applications.
 These Docker images are defined in external repos, and must be built
 separately before deploying the umd-fcrepo-docker stack.
 
+* **docker.lib.umd.edu/fcrepo-fixity** (from [umd-fcrepo-fixity]):
+
+    ```bash
+    cd ~/git
+    git clone git@github.com:umd-lib/umd-fcrepo-fixity.git
+    cd umd-fcrepo-fixity
+    docker build -t docker.lib.umd.edu/fcrepo-fixity .
+    ```
+  
 * **docker.lib.umd.edu/fcrepo-messaging** (from [umd-fcrepo-messaging]):
 
     ```bash
@@ -36,14 +45,13 @@ separately before deploying the umd-fcrepo-docker stack.
 
 ## Quick Start
 
-See the "umd-fcrepo Local Development Setup" instructions in
-<https://github.com/umd-lib/umd-fcrepo/blob/main/docs/umd-fcrepo-local-development-setup.md>
-for information about setting up umd-fcrepo using this repository, as well as
-options for setting up Plastron and Archelon.
+See the [umd-fcrepo Local Development Setup] instructions for information about
+setting up umd-fcrepo using this repository, as well as options for setting up
+[Plastron] and [Archelon].
 
 ### Fixity checking
 
-The "docker.lib.umd.edu/fcrepo-fixity" image can be used to run fixity checking,
+The `docker.lib.umd.edu/fcrepo-fixity` image can be used to run fixity checking,
 using the command:
 
 ```bash
@@ -119,8 +127,11 @@ files for each image for more information:
 * [Fuseki](fuseki/README.md)
 * [Mail](mail/README.md)
 
+[umd-fcrepo-fixity]: https://github.com/umd-lib/umd-fcrepo-fixity
 [umd-fcrepo-messaging]: https://github.com/umd-lib/umd-fcrepo-messaging
 [umd-fcrepo-solr]: https://github.com/umd-lib/umd-fcrepo-solr
 [umd-fcrepo-webapp]: https://github.com/umd-lib/umd-fcrepo-webapp
 [aiosmtpd]: https://aiosmtpd.readthedocs.io/en/latest/README.html
-
+[umd-fcrepo Local Development Setup]: https://github.com/umd-lib/umd-fcrepo/blob/main/docs/umd-fcrepo-local-development-setup.md
+[Plastron]: https://github.com/umd-lib/plastron
+[Archelon]: https://github.com/umd-lib/archelon
