@@ -15,6 +15,15 @@ separately before deploying the umd-fcrepo-docker stack.
     cd umd-fcrepo-fixity
     docker build -t docker.lib.umd.edu/fcrepo-fixity .
     ```
+
+* **docker.lib.umd.edu/fcrepo-fuseki** (from [umd-fcrepo-fuseki]):
+
+    ```bash
+    cd ~/git
+    git clone git@github.com:umd-lib/umd-fcrepo-fuseki.git
+    cd umd-fcrepo-fuseki
+    docker build -t docker.lib.umd.edu/fcrepo-fuseki .
+    ```
   
 * **docker.lib.umd.edu/fcrepo-messaging** (from [umd-fcrepo-messaging]):
 
@@ -124,10 +133,10 @@ Database initialization scripts:
 Each of the images may also be built and run individually. See the README
 files for each image for more information:
 
-* [Fuseki](fuseki/README.md)
 * [Mail](mail/README.md)
 
 [umd-fcrepo-fixity]: https://github.com/umd-lib/umd-fcrepo-fixity
+[umd-fcrepo-fuseki]: https://github.com/umd-lib/umd-fcrepo-fuseki
 [umd-fcrepo-messaging]: https://github.com/umd-lib/umd-fcrepo-messaging
 [umd-fcrepo-solr]: https://github.com/umd-lib/umd-fcrepo-solr
 [umd-fcrepo-webapp]: https://github.com/umd-lib/umd-fcrepo-webapp
