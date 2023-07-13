@@ -39,7 +39,7 @@ services:
       - AUDIT_DB_PASSWORD=camel
       - AUDIT_EVENT_BASE_URI=http://fcrepo-local:8080/fcrepo/audit/
       - AUDIT_TRIPLESTORE_UPDATE_URI=http://fuseki:3030/fcrepo-audit/update
-      - BATCH_USER=plastron-batch
+      - BATCH_USER=plastron
       - FIXITY_LOG_DIR=/tmp
       - INDEX_SOLR_UPDATE_URI=http://solr-fedora4:8983/solr/fedora4/update
       - INDEX_TRIPLESTORE_UPDATE_URI=http://fuseki:3030/fedora4/update
@@ -128,8 +128,3 @@ volumes:
   fuseki-data:
   repository-data:
   repository-messaging-data:
-networks:
-  default:
-    driver: overlay
-    attachable: true
-    name: umd-fcrepo_default
