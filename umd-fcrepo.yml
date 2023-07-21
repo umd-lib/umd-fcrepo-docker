@@ -128,3 +128,8 @@ volumes:
   fuseki-data:
   repository-data:
   repository-messaging-data:
+networks:
+  default:
+    driver: overlay
+    attachable: true
+    name: umd-fcrepo_default
