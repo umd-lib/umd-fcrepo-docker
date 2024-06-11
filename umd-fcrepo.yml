@@ -67,9 +67,7 @@ services:
     ports:
       - "3030:3030"
   repository:
-    # pin the repository image to 2.6.0, due to a bug in the 2.7.0-rc1 image
-    # see https://issues.umd.edu/browse/LIBFCREPO-1061
-    image: docker.lib.umd.edu/fcrepo-webapp:2.6.0
+    image: docker.lib.umd.edu/fcrepo-webapp:latest
     configs:
       - source: basic-auth.properties
         target: /etc/fcrepo/basic-auth.properties
@@ -87,6 +85,7 @@ services:
       - CREDENTIALS_FILE=/etc/fcrepo/basic-auth.properties
       - FCREPO_BASE_URL=http://fcrepo-local:8080/
       - IP_MAPPING_FILE=/etc/fcrepo/ip-mapping.properties
+      - IP_MAPPING_HEADER_NAME=X-Auth-IP-Mapping
       - JWT_SECRET
       - LDAP_URL=ldap://directory.umd.edu
       - LDAP_BASE_DN=ou=people,dc=umd,dc=edu
@@ -129,3 +128,8 @@ volumes:
   fuseki-data:
   repository-data:
   repository-messaging-data:
+networks:
+  default:
+    driver: overlay
+    attachable: true
+    name: umd-fcrepo_default
